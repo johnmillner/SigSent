@@ -7,14 +7,8 @@ IMUstopBits = serial.STOPBITS_ONE
 IMUbyteSize = serial.EIGHTBITS
 IMUtimeout  = 0
 
-ser = serial.Serial( \
-    port = IMUport, baudrate = IMUbaud, parity = IMUparity, \
-    stopbits = IMUstopBits, bytesize = IMUbyteSize, timeout = IMUtimeout )
+ser = serial.Serial('/dev/ttyUSB0', IMUbaud, timeout = IMUtimeout) as ser:
+    line = ser.readline()
     
-print("connected to: " + ser.portstr)
 
-while True:
-    line = ser.readline();
-    if line:
-        print(line),
-    ser.close()
+print(line)
