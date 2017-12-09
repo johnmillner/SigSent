@@ -22,6 +22,17 @@
     <arg name="battery" value="$(arg battery)" />
   </include>
   
+  <!--
+    -   add rviz
+    -   add amcl
+    -   add gmapping
+    -   add global_planner
+    -   add SMACH
+    -   add nmea_navsat_driver
+    -   add razor_imu_driver
+    -   add urg_node
+   -->
+  
   <!-- CUSTOM - JTM - Hokuyo UTM-30lx LIDAR -->
   <node name="hokuyo" pkg="urg_node" type="urg_node" respawn="false" output="screen">
     <param name="calibrate_time" type="bool" value="true"/>
@@ -37,5 +48,4 @@
     <!--<param name="frame_id" value="hokuyo_laser_frame"/>-->
    </node>
   
-
 </launch>
