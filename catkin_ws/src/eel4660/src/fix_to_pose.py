@@ -7,7 +7,7 @@ from geometry_msgs.msg import Pose
 def callback(data):
     
     #set up publisher
-    pub = rospy.Publisher('local_xy_origin', NavSatFix, queue_size=10)
+    pub = rospy.Publisher('local_xy_origin', Pose, queue_size=10)
     rate = rospy.Rate(10)
     
     #translate
