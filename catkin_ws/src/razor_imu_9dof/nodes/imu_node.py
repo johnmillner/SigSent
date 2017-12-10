@@ -136,7 +136,7 @@ gyro_average_offset_z = rospy.get_param('~gyro_average_offset_z', 0.0)
 # Check your COM port and baud rate
 rospy.loginfo("Opening %s...", port)
 try:
-    ser = serial.Serial(port=port, baudrate=57600, timeout=1)
+    ser = serial.Serial(port=port, baudrate=115200, timeout=1)
 except serial.serialutil.SerialException:
     rospy.logerr("IMU not found at port "+port + ". Did you specify the correct port in the launch file?")
     #exit
