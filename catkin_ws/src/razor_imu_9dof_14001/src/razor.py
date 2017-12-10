@@ -9,8 +9,9 @@ from tf.transformations import quaternion_from_euler
 def imu_parser():
 
     #set up ports and stuff
-    port = '/dev/ttyACM0'
+    port = '/dev/ttyACM1'
     baud = 115200
+    timeout = 1
     rospy.loginfo("starting imu node for sparfun razor imu 14001")
     
     #constants
@@ -22,6 +23,7 @@ def imu_parser():
     rospy.loginfo("opening serial port at port: ", port, " and at baud rate of ", baud)
     s = serial.Serial(port)
     s.baudrate = baud
+    s.timeout = timeout
     
     rospy.loginfo("port has been opened!")
     
@@ -30,15 +32,30 @@ def imu_parser():
     rospy.init_node('razor_imu_14001', anonymous=True)
     rate = rospy.Rate(10)
     
+    i = 0   #set counter for trying to read data
+    
     #enter loop 
     while not rospy.is_shutdown():
         
         #create message
         msg = Imu()
-        
+
         #read a line
-        line = s.readline()
-        
+        try:
+            line = s.readline()
+        except serial.SerialException:
+            i += 1
+            rospy.logwarn("not getting data from imu, attempt: %i of 100", i)
+            if i > 100:
+                s.close()
+                rospy.logfatal("can't connect to IMU :( ")
+            continue
+            
+        if not line or i >100:
+            i+=1
+            rospy.logwarn("not getting data from imu, attempt: %i of 100", i)
+            continue
+                
         #parse the line
         data = line.split(", ")
         
