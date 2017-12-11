@@ -19,8 +19,8 @@
     </node>
 
     <!-- JTM - transform -->
-    <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
-    <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 -.2 0 0 0 /base_link /base_footprint 10" />
+    <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
+    <node name="tf_footprint" pkg="tf" type="static_transform_publisher" args="0 0 -.2 0 0 0 /base_link /base_footprint 10" />
 
   
 </launch>
