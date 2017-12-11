@@ -9,7 +9,7 @@ from tf.transformations import quaternion_from_euler
 def imu_parser():
 
     #set up ports and stuff
-    port = '/dev/ttyACM1'
+    port = '/dev/ttyUSB0'
     baud = 115200
     timeout = 1
     rospy.loginfo("starting imu node for sparfun razor imu 14001")
@@ -46,7 +46,7 @@ def imu_parser():
         except serial.SerialException:
             i += 1
             rospy.logwarn("not getting data from imu, attempt: %i of 100", i)
-            if i > 100:
+            if i > 10:
                 s.close()
                 rospy.logfatal("can't connect to IMU :( ")
             continue

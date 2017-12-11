@@ -50,7 +50,7 @@
    </node>
    
    <!-- JTM Gmapping -->
-   <node name = "gmapping" pkg="gmapping" type="slam_gmapping" respawns="false" output="screen">
+   <node name = "gmapping" pkg="gmapping" type="slam_gmapping" respawn="false" output="screen">
     <param name = "scan" type="string" value="base_scan"/>
    </node>
    
@@ -83,7 +83,7 @@
       <remap from="fix" to="/gps/fix" />
       <param name="rot_covariance" value="99999" />
       <param name="frame_id" value="base_footprint" />
-    </node>
+    </node>'
     
     <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
         <param name="output_frame" value="odom"/>
@@ -101,7 +101,7 @@
      <node pkg="gps_common" type="utm_odometry_node" name = "utm_odometry_node"/>
      
      <!--convert GPS fix to a pose-->
-     <node name = "fix_to_pose" pkg = "eel4660" type="fix_to_pose.py" />
+     <node name = "fix_to_pose" pkg = "eel4660" type="fix_to_pose" />
      
      <!--translates GPS goals to action goals for move_base -->
      <node name="gps_goal" pkg="gps_goal" type="gps_goal"/>
