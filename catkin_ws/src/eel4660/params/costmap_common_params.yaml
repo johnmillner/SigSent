@@ -5,7 +5,7 @@ footprint: [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]]
 #robot_radius: ir_of_robot
 inflation_radius: 0.55
 
-observation_sources: laser_scan_sensor
+observation_sources: laser
 
 laser_scan_sensor: {sensor_frame: frame_name, data_type: LaserScan, topic: topic_name, marking: true, clearing: true}
 
