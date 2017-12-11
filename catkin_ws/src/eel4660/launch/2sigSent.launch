@@ -12,7 +12,10 @@
     </node>
 
 	<!-- JTM - extended khalman filter -->
-    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
+    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" >
+    	<remap name="odom_bomined" value="odom" />
+    	<remap name="base_footprint" value="base_link" />
+    </node>
 
     <!-- JTM - transform -->
     <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
