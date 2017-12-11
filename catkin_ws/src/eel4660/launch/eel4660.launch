@@ -51,7 +51,7 @@
    
    <!-- JTM Gmapping -->
    <node name = "gmapping" pkg="gmapping" type="slam_gmapping" respawns="false" output="screen">
-    <param name = "scan" type="string" value="base_scan">
+    <param name = "scan" type="string" value="base_scan"/>
    </node>
    
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
