@@ -1,17 +1,23 @@
 <launch>
     
-	<!-- AMCL -->
-	<include file="$(find amcl)/examples/amcl_omni.launch" />
+    <!-- JTM - Hokuyo UTM-30lx LIDAR -->
+    <node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
+        <param name="calibrate_time" type="bool" value="true"/>
+        <param name="port" type="string" value="/dev/ttyACM0"/>
+        <param name="intensity" type="bool" value="false"/>
+        <param name="min_ang" value="-2.2689"/>
+        <param name="max_ang" value="+2.2689"/>
+        <param name="cluster" value="1"/>    
+        <param name="frame_id" value="base_link"/>
+    </node>
 
-	<!-- Move base -->
-	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-		<rosparam file="$(find eel4660)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
-		<rosparam file="$(find eel4660)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
-		<rosparam file="$(find eel4660)/params/local_costmap_params.yaml" command="load" />
-		<rosparam file="$(find eel4660)/params/global_costmap_params.yaml" command="load" />
-		<rosparam file="$(find eel4660)/params/base_local_planner_params.yaml" command="load" />
-	</node>
+	<!-- JTM - extended khalman filter -->
+    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
 
-    <!-- JTM - GPS goal -->
-    <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
+    <!-- JTM - transform -->
+    <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
+
+  
 </launch>
+
+

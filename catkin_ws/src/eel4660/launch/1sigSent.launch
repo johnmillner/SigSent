@@ -16,17 +16,6 @@
         <arg name="serialport" value="$(arg serialport)" />
     </include>
 
-    <!-- JTM - Hokuyo UTM-30lx LIDAR -->
-    <node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
-        <param name="calibrate_time" type="bool" value="true"/>
-        <param name="port" type="string" value="/dev/ttyACM0"/>
-        <param name="intensity" type="bool" value="false"/>
-        <param name="min_ang" value="-2.2689"/>
-        <param name="max_ang" value="+2.2689"/>
-        <param name="cluster" value="1"/>    
-        <param name="frame_id" value="base_link"/>
-    </node>
-
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
     <node name="imu" pkg="razor_imu_9dof_14001" type="razor.py" respawn="true" output="screen"/>
 
@@ -45,19 +34,7 @@
     <!-- JTM - turns GPS fix message to a Stamped Pose message for gps_goal -->
     <node name="gpsTOpose" pkg="eel4660" type="fix_to_pose.py" />
     
-    <!-- JTM - extended khalman filter -->
-    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
+	<!-- JTM - GPS goal -->
+    <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
     
-    <!-- JTM - SLAM -->
-    <node name="gmapping" pkg="gmapping" type="slam_gmapping" >
-        <param name="base_frame" value="base_link" />
-        <param name="odom_frame" value="odom" />
-        <param name="map_frame" value="map" />
-        <param name="scan" value="scan" />
-        
-    </node>
-    
-    <!-- JTM - transform -->
-    <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
-
 </launch>
