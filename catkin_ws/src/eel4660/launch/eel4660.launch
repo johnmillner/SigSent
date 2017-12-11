@@ -21,10 +21,7 @@
     <arg name="serialport" value="$(arg serialport)" />
   </include>
  
-  
-  
-<!-- Move base -->
-<include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml"/>
+
   <!--
     -     add rviz
     -   * add amcl
@@ -35,8 +32,6 @@
     -   * add razor_imu_driver
     -   * add urg_node
    -->
-
-  
   
   <!-- JTM - Hokuyo UTM-30lx LIDAR -->
   <node name="hokuyo" pkg="urg_node" type="urg_node" respawn="false" output="screen">
@@ -47,15 +42,7 @@
     <param name="max_ang" value="+2.2689"/>
     <param name="cluster" value="1"/>    
     <param name="frame_id" value="base_footprint"/>
-   </node>
-   
-   <!-- JTM Gmapping -->
-   <node name = "gmapping" pkg="gmapping" type="slam_gmapping" respawn="false" output="screen">
-    <param name="scan_topic" value="/scan" />
-    <param name="base_frame" value="base_footprint"/>
-    <param name="odom_frame" value="odom"/>
-    
-   </node>
+   </node>   
    
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
     <node name="imu" pkg="razor_imu_9dof_14001" type="razor.py" respawn="false" output="screen"/>
@@ -69,16 +56,16 @@
     <!-- JTM - RasPi Cam -->
     <node name="RasPiCam" pkg="raspicam_node" type="raspicam_node" respawn="false" output="screen"/>
     
-    <!-- AMCL -->
+    <!-- AMCL --
       <arg name="custom_amcl_launch_file" default="$(find turtlebot_navigation)/launch/includes/amcl/$(arg 3d_sensor)_amcl.launch.xml"/>
-      <arg name="initial_pose_x" default="0.0"/> <!-- Use 17.0 for willow's map in simulation -->
-      <arg name="initial_pose_y" default="0.0"/> <!-- Use 17.0 for willow's map in simulation -->
+      <arg name="initial_pose_x" default="0.0"/> 
+      <arg name="initial_pose_y" default="0.0"/> 
       <arg name="initial_pose_a" default="0.0"/>
       <include file="$(arg custom_amcl_launch_file)">
         <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
         <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
         <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
-    </include>
+    </include>-->
     
     <!--gps convert from navSatFix to odom -->
     <node name="gps_conv" pkg="gps_common" type="utm_odometry_node">
@@ -100,6 +87,9 @@
         <remap from="vo" to="gps_meas" />
       </node>
       
+       <!-- JTM Gmapping -->
+   <include file="$(find turtlebot_navigation)/launch/gmapping_demo.launch" />
+       
       <!--convert GPS fix to UTM for move_base-->
      <node pkg="gps_common" type="utm_odometry_node" name = "utm_odometry_node"/>
      
@@ -108,6 +98,8 @@
      
      <!--translates GPS goals to action goals for move_base -->
      <node name="gps_goal" pkg="gps_goal" type="gps_goal"/>
+     
+     
      
      
      
