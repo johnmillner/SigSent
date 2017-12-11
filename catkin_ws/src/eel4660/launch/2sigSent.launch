@@ -12,10 +12,15 @@
     </node>
 
 	<!-- JTM - extended khalman filter -->
-    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
+    <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf">
+    	<param name="output_frame" value="odom"/>
+    	<param name="odom_used" value="true"/>
+    	<param name="imu_used" value="true"/>
+    </node>
 
     <!-- JTM - transform -->
     <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
+    <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 -.2 0 0 0 /base_link /base_footprint 10" />
 
   
 </launch>
