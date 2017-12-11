@@ -6,6 +6,7 @@
         <param name="odom_frame" value="odom" />
         <param name="map_frame" value="map" />
         <param name="scan" value="scan" />
+        <remap from="odom_combined" to="odom" />
         
     </node>
     
