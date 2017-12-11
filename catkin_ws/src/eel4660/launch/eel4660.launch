@@ -87,8 +87,9 @@
         <remap from="vo" to="gps_meas" />
       </node>
       
-       <!-- JTM Gmapping -->
-   <include file="$(find turtlebot_navigation)/launch/gmapping_demo.launch" />
+      <!-- JTM - Gmapping-->
+  <include file="$(find turtlebot_navigation)/launch/includes/gmapping/kinect_gmapping.launch.xml"/>
+  
        
       <!--convert GPS fix to UTM for move_base-->
      <node pkg="gps_common" type="utm_odometry_node" name = "utm_odometry_node"/>
