@@ -24,8 +24,6 @@
 		<rosparam file="$(find eel4660)/params/base_local_planner_params.yaml" command="load" />
 	</node>
 
-    <!-- JTM - GPS goal -->
-    <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
 </launch>
 
 
