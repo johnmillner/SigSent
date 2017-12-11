@@ -10,7 +10,7 @@ def callback(data):
     rate = rospy.Rate(100)
     
     #translate
-    pub.publish(data.PoseWithCovariance.Pose)
+    pub.publish(data.pose.pose)
     rate.sleep()
     
     
