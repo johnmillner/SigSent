@@ -13,8 +13,8 @@ def callback(data):
     #translate
     msg = PoseStamped()
     msg.header = data.header
-    msg.pose.position.x = data.latitude
-    msg.pose.position.y = data.longitude
+    msg.pose.position.x = data.longitude
+    msg.pose.position.y = data.latitude
     msg.pose.position.z = data.altitude
     
     #publish message
