@@ -95,7 +95,7 @@
      <node pkg="gps_common" type="utm_odometry_node" name = "utm_odometry_node"/>
      
      <!--convert GPS fix to a pose-->
-     <node name = "fix_to_pose" pkg = "eel4660" type="fix_to_pose" />
+     <node name = "fix_to_pose" pkg = "eel4660" type="fix_to_pose.py" />
      
      <!--translates GPS goals to action goals for move_base -->
      <node name="gps_goal" pkg="gps_goal" type="gps_goal"/>
