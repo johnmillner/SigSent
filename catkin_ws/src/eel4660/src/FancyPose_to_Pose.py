@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rospy
 
-from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseWithCovariance 
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseWithCovariance, PoseStamped 
 
 def callback(data):
     
@@ -10,7 +10,10 @@ def callback(data):
     rate = rospy.Rate(100)
     
     #translate
-    pub.publish(data.pose.pose)
+    msg = PoseStamped()
+    msg.pose = data.pose.pose
+    msg.header = data.header
+    pub.publish(msg)
     rate.sleep()
     
     
