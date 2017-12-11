@@ -10,7 +10,7 @@ def callback(data):
     rate = rospy.Rate(100)
     
     #translate
-    pub.publish(data.Pose)
+    pub.publish(data.PoseWithCovariance.Pose)
     rate.sleep()
     
     
@@ -22,7 +22,7 @@ def xtra_to_pose():
     
     
     #set up subscriber
-    rospy.Subscriber('robot_pose_ekf/odom_combined', PoseWithCovariance, callback)
+    rospy.Subscriber('robot_pose_ekf/odom_combined', PoseWithCovarianceStamped, callback)
     
     #enter loop 
     rospy.spin()
