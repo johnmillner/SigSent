@@ -16,12 +16,10 @@
     
 	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
 		<arg name="mapping" value="/odom_combined /odom" />
-		</rosparam>
 	</node>
 	
 	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
 		<arg name="mapping" value="/base_footprint /base_link" />
-		</rosparam>
 	</node>
 
     <!-- JTM - transform -->
