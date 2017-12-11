@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rospy
 
-from geometry_msgs.msg import Pose, PoseWithCovariance
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 def callback(data):
     
