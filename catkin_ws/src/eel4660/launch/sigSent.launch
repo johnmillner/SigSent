@@ -60,7 +60,7 @@
     </node>
     
     <!-- JTM - AMCL -->
-    <node name="acml" pkg="acml" type="acml" >
+    <node name="amcl" pkg="amcl" type="amcl" >
         <param name="use_map_topic"     value="true"/>
         <param name="odom_frame_id"     value="odom"/> 
         <param name="base_frame_id"     value="base_footprint"/> 
