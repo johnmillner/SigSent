@@ -34,8 +34,6 @@ def imu_parser():
     
     i = 0   #set counter for trying to read data
     
-    rospy.loginfo("sleeping for 5 seconds lol")
-    rospy.sleep(5)
     
     #enter loop 
     while not rospy.is_shutdown():

@@ -59,21 +59,5 @@
     
     <!-- JTM - transform -->
     <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /base_link /laser 10" />
-    
-    
-    
-    <!-- JTM - AMCL -->
-    <node name="amcl" pkg="amcl" type="amcl" >
-        <param name="odom_model_type" value="diff-corrected" />
-    </node>
-    
-    <!-- Move base -->
-    <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
-    	<arg name="custom_param_file" value="$(find turtlebot_navigation)/param/dummy.yaml"/>
-    	<remap from='odom_combined' to='odom' />
-    </include>
-
-    <!-- JTM - GPS goal -->
-    <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
 
 </launch>
