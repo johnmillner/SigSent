@@ -12,6 +12,7 @@
 	<node name="amcl" pkg="amcl" type="amcl">
 		<param name="use_map_topic" value='true' />
 		<param name="odom_model_type" value="diff-corrected" />
+		<param name="odom_frame_id" value="odom_combined" />
 	</node>
 
 	<!-- Move base -->
