@@ -13,8 +13,8 @@
 
 	<!-- JTM - extended khalman filter -->
     <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" >
-    	<remap name="odom_bomined" value="odom" />
-    	<remap name="base_footprint" value="base_link" />
+    	<remap from="odom_bomined" to="odom" />
+    	<remap from="base_footprint" to="base_link" />
     </node>
 
     <!-- JTM - transform -->
