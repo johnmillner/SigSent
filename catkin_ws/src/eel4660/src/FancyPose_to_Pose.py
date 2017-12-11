@@ -1,8 +1,7 @@
 #!/usr/bin/python
 import rospy
 
-from sensor_msgs.msg import NavSatFix
-from geometry_msgs import Pose, PoseWithCovariance
+from geometry_msgs.msg import Pose, PoseWithCovariance
 
 def callback(data):
     
