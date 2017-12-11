@@ -11,7 +11,7 @@ def callback(data):
     rate = rospy.Rate(10)
     
     #translate
-    msg = Pose()
+    msg = PoseStamped()
     msg.header = data.header
     msg.pose.point.x = data.latitude
     msg.pose.point.y = data.longitude
