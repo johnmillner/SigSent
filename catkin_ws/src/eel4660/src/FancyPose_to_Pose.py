@@ -2,27 +2,28 @@
 import rospy
 
 from sensor_msgs.msg import NavSatFix
+from geometry_msgs import Pose, PoseWithCovariance
 
 def callback(data):
     
     #set up publisher
-    pub = rospy.Publisher('gps_goal_fix', NavSatFix, queue_size=10)
-    rate = rospy.Rate(10)
+    pub = rospy.Publisher('local_xy_origin', Pose, queue_size=10)
+    rate = rospy.Rate(100)
     
     #translate
     pub.publish(data.Pose)
     rate.sleep()
     
     
-def translator():
+def xtra_to_pose():
 
     #start up node
-    rospy.init_node('translator',anonymous=True)
+    rospy.init_node('xtra_to_pose',anonymous=True)
 
     
     
     #set up subscriber
-    rospy.Subscriber('fix', NavSatFix, callback)
+    rospy.Subscriber('robot_pose_ekf/odom_combined', PoseWithCovariance, callback)
     
     #enter loop 
     rospy.spin()
@@ -32,6 +33,6 @@ def translator():
 
 if __name__ == '__main__':
     try:
-        translator()
+        xtra_to_pose()
     except rospy.ROSInterruptException:
         pass
