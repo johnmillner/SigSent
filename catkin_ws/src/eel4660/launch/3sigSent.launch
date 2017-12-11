@@ -10,7 +10,10 @@
     </node>
     
   	<!-- AMCL -->
-	<include file="$(find amcl)/examples/amcl_omni.launch" />
+	<node name="amcl" pkg="amcl" type="amcl">
+		<param name="use_map_topic" value='true' />
+		<param name="odom_model_type" value="diff-corrected" />
+	</node>
 
 	<!-- Move base -->
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
