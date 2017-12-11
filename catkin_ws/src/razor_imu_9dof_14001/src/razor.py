@@ -9,7 +9,7 @@ from tf.transformations import quaternion_from_euler
 def imu_parser():
 
     #set up ports and stuff
-    port = '/dev/ttyUSB0'
+    port = '/dev/ttyACM1'
     baud = 115200
     timeout = 1
     rospy.loginfo("starting imu node for sparfun razor imu 14001")
