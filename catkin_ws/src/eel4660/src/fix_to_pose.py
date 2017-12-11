@@ -2,12 +2,12 @@
 import rospy
 
 from sensor_msgs.msg import NavSatFix
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
 
 def callback(data):
     
     #set up publisher
-    pub = rospy.Publisher('local_xy_origin', Pose, queue_size=10)
+    pub = rospy.Publisher('local_xy_origin', PoseStamped, queue_size=10)
     rate = rospy.Rate(10)
     
     #translate
