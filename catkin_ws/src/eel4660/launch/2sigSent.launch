@@ -14,11 +14,11 @@
 	<!-- JTM - extended khalman filter -->
     <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
     
-	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
+	<node pkg="tf" type="tf_remap" name="remap_odomcombined" output="screen">
 		<arg name="mapping" value="/odom_combined /odom" />
 	</node>
 	
-	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
+	<node pkg="tf" type="tf_remap" name="remap_base_footprint" output="screen">
 		<arg name="mapping" value="/base_footprint /base_link" />
 	</node>
 
