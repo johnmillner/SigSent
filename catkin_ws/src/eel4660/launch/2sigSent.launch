@@ -1,10 +1,16 @@
 <launch>
     
-    <!-- Move base -->
-    <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
-    	<arg name="custom_param_file" value="$(find turtlebot_navigation)/param/dummy.yaml"/>
-    	<remap from='odom_combined' to='odom' />
-    </include>
+	<!-- AMCL -->
+	<include file="$(find amcl)/examples/amcl_omni.launch" />
+
+	<!-- Move base -->
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find eel4660)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
+		<rosparam file="$(find eel4660)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
+		<rosparam file="$(find eel4660)/params/local_costmap_params.yaml" command="load" />
+		<rosparam file="$(find eel4660)/params/global_costmap_params.yaml" command="load" />
+		<rosparam file="$(find eel4660)/params/base_local_planner_params.yaml" command="load" />
+	</node>
 
     <!-- JTM - GPS goal -->
     <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
