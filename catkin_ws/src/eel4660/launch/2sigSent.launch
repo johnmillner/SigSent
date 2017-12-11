@@ -1,8 +1,4 @@
 <launch>
-	<!-- JTM - AMCL -->
-    <node name="amcl" pkg="amcl" type="amcl" >
-        <param name="odom_model_type" value="diff-corrected" />
-    </node>
     
     <!-- Move base -->
     <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
