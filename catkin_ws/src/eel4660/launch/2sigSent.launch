@@ -15,8 +15,12 @@
     <node name="ekf" pkg="robot_pose_ekf" type="robot_pose_ekf" />
     
 	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
-		<rosparam param="mappings">
-			[{old: odom_combined, new: /odom},{old: base_footprint, new: /base_link}]
+		<arg name="mapping" value="/odom_combined /odom" />
+		</rosparam>
+	</node>
+	
+	<node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
+		<arg name="mapping" value="/base_footprint /base_link" />
 		</rosparam>
 	</node>
 
