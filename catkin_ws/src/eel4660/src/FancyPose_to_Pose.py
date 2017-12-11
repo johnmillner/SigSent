@@ -6,7 +6,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseWithCovarianc
 def callback(data):
     
     #set up publisher
-    pub = rospy.Publisher('local_xy_origin', Pose, queue_size=10)
+    pub = rospy.Publisher('local_xy_origin', PoseStamped, queue_size=10)
     rate = rospy.Rate(100)
     
     #translate
