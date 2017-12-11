@@ -67,13 +67,13 @@
         <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
     </include>-->
     
-    <!--gps convert from navSatFix to odom -->
+    <!--gps convert from navSatFix to odom 
     <node name="gps_conv" pkg="gps_common" type="utm_odometry_node">
       <remap from="odom" to="vo"/>
       <remap from="fix" to="/gps/fix" />
       <param name="rot_covariance" value="99999" />
       <param name="frame_id" value="base_footprint" />
-    </node>'
+    </node>-->
     
     <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
         <param name="output_frame" value="odom"/>
@@ -88,7 +88,7 @@
       </node>
       
       <!-- JTM - Gmapping-->
-  <include file="$(find turtlebot_navigation)/launch/includes/gmapping/kinect_gmapping.launch.xml"/>
+     <include file="$(find turtlebot_navigation)/launch/includes/gmapping/kinect_gmapping.launch.xml"/>
   
        
       <!--convert GPS fix to UTM for move_base-->
