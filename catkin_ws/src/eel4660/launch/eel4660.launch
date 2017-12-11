@@ -22,9 +22,7 @@
   </include>
  
   
-  <!-- JTM - Gmapping-->
-  <include file="$(find turtlebot_navigation)/launch/includes/gmapping/kinect_gmapping.launch.xml"/>
-
+  
 <!-- Move base -->
 <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml"/>
   <!--
@@ -48,7 +46,12 @@
     <param name="min_ang" value="-2.2689"/>
     <param name="max_ang" value="+2.2689"/>
     <param name="cluster" value="1"/>    
-    <param name="frame_id" value="base_link"/>
+    <param name="frame_id" value="base_scan"/>
+   </node>
+   
+   <!-- JTM Gmapping -->
+   <node name = "gmapping" pkg="gmapping" type="slam_gmapping" respawns="false" output="screen">
+    <param name = "scan" type="string" value="base_scan">
    </node>
    
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
@@ -81,8 +84,6 @@
       <param name="rot_covariance" value="99999" />
       <param name="frame_id" value="base_footprint" />
     </node>
-  
-    <remap from="vo" to="gps_meas" />
     
     <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
         <param name="output_frame" value="odom"/>
@@ -95,5 +96,17 @@
         <param name="self_diagnose" value="false"/>
         <remap from="vo" to="gps_meas" />
       </node>
+      
+      <!--convert GPS fix to UTM for move_base-->
+     <node pkg="gps_common" type="utm_odometry_node" name = "utm_odometry_node"/>
+     
+     <!--convert GPS fix to a pose-->
+     <node name = "fix_to_pose" pkg = "eel4660" type="fix_to_pose.py" />
+     
+     <!--translates GPS goals to action goals for move_base -->
+     <node name="gps_goal" pkg="gps_goal" type="gps_goal"/>
+     
+     
+     
     
 </launch>
