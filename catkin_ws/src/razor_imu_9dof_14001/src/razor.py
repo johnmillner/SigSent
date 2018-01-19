@@ -28,7 +28,7 @@ def imu_parser():
     rospy.loginfo("port has been opened!")
     
     #node/publisher setup
-    pub = rospy.Publisher('imu', Imu, queue_size=10)
+    pub = rospy.Publisher('imu_data', Imu, queue_size=10)
     rospy.init_node('razor_imu_14001', anonymous=True)
     rate = rospy.Rate(10)
     
@@ -64,7 +64,7 @@ def imu_parser():
         #TODO - put imu into proper frame_id
         msg.header.seq = int(data[0])
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = "base_link" #make into actually correct frame id
+        msg.header.frame_id = "imu" #make into actually correct frame id
         
         #set data fields
         q = quaternion_from_euler(float(data[7]), float(data[8]), float(data[9]))

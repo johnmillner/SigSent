@@ -12,6 +12,8 @@
 	<node name="amcl" pkg="amcl" type="amcl">
 		<param name="use_map_topic" value='true' />
 		<param name="odom_model_type" value="diff-corrected" />
+		<param name="odom_frame_id " value="odom_combined" />
+		<param name="base_frame_id" value="base_footprint" />
 	</node>
 	
 	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
@@ -59,6 +61,17 @@
 		<remap from="scan" to="$(arg laser_topic)"/>
 		
 	</node>
+	
+	<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+		<param name="output_frame" value="odom"/>
+		<param name="freq" value="30.0"/>
+		<param name="sensor_timeout" value="1.0"/>
+		<param name="odom_used" value="true"/>
+		<param name="imu_used" value="true"/>
+		<param name="vo_used" value="false"/>
+		<param name="debug" value="false"/>
+		<param name="self_diagnose" value="false"/>
+  	</node>
 
 </launch>
 
