@@ -66,7 +66,7 @@ endif()
 set(raspicam_node_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
-if("TRUE" STREQUAL "TRUE")
+if("FALSE" STREQUAL "TRUE")
   set(raspicam_node_SOURCE_PREFIX /home/rwales/SigSent/catkin_ws/src/raspicam_node)
   set(raspicam_node_DEVEL_PREFIX /home/rwales/SigSent/catkin_ws/devel)
   set(raspicam_node_INSTALL_PREFIX "")
@@ -91,13 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(raspicam_node_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/rwales/SigSent/catkin_ws/devel/include;/home/rwales/SigSent/catkin_ws/src/raspicam_node/include " STREQUAL " ")
+if(NOT "include " STREQUAL " ")
   set(raspicam_node_INCLUDE_DIRS "")
-<<<<<<< HEAD
-  set(_include_dirs "/home/john/SigSent/catkin_ws/devel/include;/home/john/SigSent/catkin_ws/src/raspicam_node/include")
-=======
-  set(_include_dirs "/home/rwales/SigSent/catkin_ws/devel/include;/home/rwales/SigSent/catkin_ws/src/raspicam_node/include")
->>>>>>> 9a6cd5c6324c0cdf414c18407f5177beec9bc7bf
+  set(_include_dirs "include")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -114,11 +110,7 @@ if(NOT "/home/rwales/SigSent/catkin_ws/devel/include;/home/rwales/SigSent/catkin
         message(FATAL_ERROR "Project 'raspicam_node' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  ${_report}")
       endif()
     else()
-<<<<<<< HEAD
-      message(FATAL_ERROR "Project 'raspicam_node' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/john/SigSent/catkin_ws/src/raspicam_node/${idir}'.  ${_report}")
-=======
-      message(FATAL_ERROR "Project 'raspicam_node' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/rwales/SigSent/catkin_ws/src/raspicam_node/${idir}'.  ${_report}")
->>>>>>> 9a6cd5c6324c0cdf414c18407f5177beec9bc7bf
+      message(FATAL_ERROR "Project 'raspicam_node' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/rwales/SigSent/catkin_ws/install/${idir}'.  ${_report}")
     endif()
     _list_append_unique(raspicam_node_INCLUDE_DIRS ${include})
   endforeach()
@@ -137,7 +129,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/rwales/SigSent/catkin_ws/devel/lib;/home/rwales/catkin_ws/devel/lib;/opt/ros/kinetic/lib)
+    foreach(path /home/rwales/SigSent/catkin_ws/install/lib;/home/rwales/catkin_ws/devel/lib;/opt/ros/kinetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

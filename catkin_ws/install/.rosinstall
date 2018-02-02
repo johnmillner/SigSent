@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/rwales/SigSent/catkin_ws/install/setup.sh
