@@ -32,7 +32,7 @@
     <node name="gpsTOutm" pkg="gps_common" type="utm_odometry_node" />
     
     <!-- JTM - turns GPS fix message to a Stamped Pose message for gps_goal -->
-    <node name="gpsTOpose" pkg="eel4660" type="fix_to_pose.py" />
+    <node name="gpsTOpose" pkg="sigsent" type="fix_to_pose.py" />
     
 	<!-- JTM - GPS goal -->
     <node name="gps_goal" pkg="gps_goal" type="gps_goal" />

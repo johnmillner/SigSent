@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot name="SigSent_turtlebot" xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <xacro:include filename="$(find eel4660)/urdf/turtlebot-structure.urdf.xacro"/>
-    <xacro:include filename="$(find eel4660)/urdf/camera.urdf.xacro"/>
+    <xacro:include filename="$(find sigsent)/urdf/turtlebot-structure.urdf.xacro"/>
+    <xacro:include filename="$(find sigsent)/urdf/camera.urdf.xacro"/>
     <xacro:include filename="$(find hector_sensors_description)/urdf/hokuyo_utm30lx.urdf.xacro"/>
     
     <sub_body />
