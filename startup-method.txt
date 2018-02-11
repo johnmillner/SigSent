@@ -3,3 +3,9 @@ source SigSent/catkin_ws/devel/setup.bash
 sudo chmod a+rw /dev/ttyACM0
 roslaunch eel4660 minimal-lidar.launch 
 
+
+Simulation:
+roslaunch sigsent turtlebot_world.launch
+roslaunch turtlebot_rviz_launchers view_robot.launch
+
+Enable laserscan to view it in RViz
