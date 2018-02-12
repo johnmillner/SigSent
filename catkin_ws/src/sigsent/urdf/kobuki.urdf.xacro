@@ -14,6 +14,11 @@
 <stack_hexagons parent="base_link"/>
 <sensor_kinect  parent="base_link"/>
 
+<xacro:include filename="$(find hector_sensors_description)/urdf/generic_camera.urdf.xacro"/>
+<xacro:generic_camera name="cam1" ros_topic="image_raw" cam_info_topic="camera_info" parent="base_link" update_rate="60" res_x="640" res_y="360" image_format="R8G8B8" hfov="90">
+  <origin xyz="0 0 +0.5" rpy="0 0 0"/>
+</xacro:generic_camera>
+
 <xacro:include filename="$(find hector_sensors_description)/urdf/hokuyo_utm30lx.urdf.xacro"/>
 <xacro:hokuyo_utm30lx name="hokuyo_laser" parent="base_link" ros_topic="scan" update_rate="40" ray_count="1081" min_angle="135" max_angle="-135">
     <origin xyz="0 0 +0.45" rpy="0 0 0" />
