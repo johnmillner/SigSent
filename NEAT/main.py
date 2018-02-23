@@ -5,7 +5,8 @@ import os
 import neat
 import visualize
 import rospy
-from std_msgs.msg import Bool
+import message_filters
+from std_msgs.msg import Bool, Image, Imu, LaserScan
 
 # This should probably be a ROS publisher node
 
@@ -30,7 +31,22 @@ def eval_genomes(genomes, config):
 
         # Poll the ROS topic that contains the Terrain Classification
         # inputs.append(...)
+        
+        # Topics:
+        # IMU: /mobile_base/sensors/imu_data
+        # Camera image: /cam1/image_raw
+        # LIDAR: /scan        
+        """
+        Example code to subscribe to multiple topics at the same time
+        
+        image_sub = message_filters.Subscriber('image', Image)
+        info_sub = message_filters.Subscriber('camera_info', CameraInfo)
 
+        ts = message_filters.TimeSynchronizer([image_sub, info_sub], 10)
+        ts.registerCallback(callback)
+        """
+        
+        
         # Poll the ROS topic for the IMU data
         # inputs.append(...)
 
