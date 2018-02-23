@@ -19,4 +19,6 @@ ROS:
     sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
     
     
+    sudo apt-get install ros-kinetic-serial
+    sudo apt-get install ros-kinetic-hector-sensors-description
     
