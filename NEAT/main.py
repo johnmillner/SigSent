@@ -46,6 +46,13 @@ def eval_genomes(genomes, config):
         ts.registerCallback(callback)
         """
         
+        ############################
+        #                          #
+        # Time to test out the ANN #
+        #                          #
+        ############################
+        
+        
         
         # Poll the ROS topic for the IMU data
         # inputs.append(...)
