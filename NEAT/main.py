@@ -36,6 +36,8 @@ def eval_genomes(genomes, config):
         # IMU: /mobile_base/sensors/imu_data
         # Camera image: /cam1/image_raw
         # LIDAR: /scan        
+
+        
         """
         Example code to subscribe to multiple topics at the same time
         
@@ -45,22 +47,39 @@ def eval_genomes(genomes, config):
         ts = message_filters.TimeSynchronizer([image_sub, info_sub], 10)
         ts.registerCallback(callback)
         """
-        
+
+        # Get the output boolean
+        output = True if net.activate() >= 0.5 else False
+
+        # Publish the True/False bool
+        pub.publish(output)        
+                
+                
         ############################
         #                          #
         # Time to test out the ANN #
         #                          #
         ############################
+        cmd_vel = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
+        r = rospy.Rate(10);
         
+        move_cmd = Twist()
+        move_cmd.linear.x = 0.2
+        move_cmd.angular.z = 0
+
+        while not rospy.is_shutdown():
+            cmd_vel.publish(move_cmd)
+            
+            # Gather some stats on how well we are moving for fitness
+            # calculate distance moved
+            # get the IMU data uniformity
+            
+            r.sleep()
         
         
         # Poll the ROS topic for the IMU data
         # inputs.append(...)
 
-        output = True if net.activate() >= 0.5 else False
-
-        # Publish the True/False bool
-        pub.publish(output)
 
         # Loop here to gather stats on the IMU for robot stability
         # and distance traveled/time spent attempting to move forward
