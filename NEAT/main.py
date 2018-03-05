@@ -6,7 +6,9 @@ import neat
 import visualize
 import rospy
 import message_filters
-from std_msgs.msg import Bool, Image, Imu, LaserScan
+from std_msgs.msg import Bool
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image, Imu, LaserScan
 
 class NEATNode:
     def __init__(self):
@@ -16,10 +18,13 @@ class NEATNode:
         
         rospy.init_node('neat', anonymous=True)
         
-        mobility_pub = rospy.Publisher('mobility_type', Bool)
+        self.mobility_pub = rospy.Publisher('mobility_type', Bool)
         imu_sub = rospy.Subscriber('/mobile_base/sensors/imu_data', Imu, self.callback, ('imu'))
         cam_sub = rospy.Subscriber('/cam1/raw_image', Image, self.callback, ('camera'))
         lidar_sub = rospy.Subscriber('/scan', LaserScan, self.callback, ('lidar'))
+        
+        print('Waiting for sensor data to come in...')
+        rospy.sleep(2)
         
         # Setup NEAT
         local_dir = os.path.dirname(__file__)
@@ -27,14 +32,14 @@ class NEATNode:
 
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                      neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                     config_file)
+                     config_path)
 
         population = neat.Population(config)
 
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
-        population.add_reporter(neat.CheckPointer(5)) # Saves every 5 generations as checkpoints to fall back on
+        population.add_reporter(neat.Checkpointer(5)) # Saves every 5 generations as checkpoints to fall back on
 
         # Pass the eval_genomes function to the population object
         # 'eval_genomes' will be called on each individual in the population to determine their
@@ -55,9 +60,9 @@ class NEATNode:
         visualize.plot_species(stats, view=True)
         
     def callback(self, data, args):
-        self.sensor_data[args[0]] = data
+        self.sensor_data[args] = data
     
-    def eval_genomes(genomes, config):
+    def eval_genomes(self, genomes, config):
         for genome_id, genome in genomes:
             # Take the ANN from the population and pass it somewhere to be used
             net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -72,9 +77,13 @@ class NEATNode:
                is used to measure fitness
             5) Set the fitness of this network based on the measured stats
             6) Move on to the next network in the population and do it again
-            """
-
+            """ 
+            
             inputs = []
+            inputs += self.sensor_data['lidar'].ranges
+            inputs += self.sensor_data['imu'].orientation_covariance
+            inputs += self.sensor_data['imu'].angular_velocity_covariance
+            inputs += self.sensor_data['imu'].linear_acceleration_covariance
 
             # Poll the ROS topic that contains the Terrain Classification
             # inputs.append(...)
@@ -83,15 +92,13 @@ class NEATNode:
             # IMU: /mobile_base/sensors/imu_data
             # Camera image: /cam1/image_raw
             # LIDAR: /scan        
-
-            
-            
+          
             
             # Get the output boolean
-            output = True if net.activate() >= 0.5 else False
+            output = True if net.activate(inputs) >= 0.5 else False
 
             # Publish the True/False bool
-            pub.publish(output)        
+            self.mobility_pub.publish(output)        
                     
                     
             ############################
@@ -106,14 +113,14 @@ class NEATNode:
             move_cmd.linear.x = 0.2
             move_cmd.angular.z = 0
 
-            while not rospy.is_shutdown():
-                cmd_vel.publish(move_cmd)
+            #for i in range(10):
+            cmd_vel.publish(move_cmd)
                 
                 # Gather some stats on how well we are moving for fitness
                 # calculate distance moved
                 # get the IMU data uniformity
                 
-                r.sleep()
+             #   r.sleep()
             
             
             # Poll the ROS topic for the IMU data
@@ -125,7 +132,9 @@ class NEATNode:
             # Should those stats be gathered in a different ROS topic and subscribed here?
             # We should probably delay here too
             # genome.fitness = ...
-
+            
+            genome.fitness = 0
+            
 if __name__ == '__main__':
     neatNode = NEATNode()
     
