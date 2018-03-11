@@ -24,6 +24,9 @@ class NEATNode:
         cam_sub = rospy.Subscriber('/cam1/raw_image', Image, self.callback, ('camera'))
         lidar_sub = rospy.Subscriber('/scan', LaserScan, self.callback, ('lidar'))
         
+        #self.sensor_data['imu'] = 1
+        #self.sensor_data['lidar'] = 2
+        
         print('Waiting for sensor data to come in...')
         while 'imu' not in self.sensor_data and 'lidar' not in self.sensor_data:
             pass
