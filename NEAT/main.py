@@ -9,6 +9,7 @@ import message_filters
 from std_msgs.msg import Bool
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, Imu, LaserScan
+from tf.transformations import euler_from_quaternion
 
 class NEATNode:
     def __init__(self):
@@ -112,15 +113,29 @@ class NEATNode:
             move_cmd = Twist()
             move_cmd.linear.x = 0.2
             move_cmd.angular.z = 0
-
-            #for i in range(10):
-            cmd_vel.publish(move_cmd)
+            
+            # TODO: Should we use the covariances
+            # TODO: Use motor goal to determine how far off we are from goal for noise
+            for i in range(10):
                 
+                # Angle and quaternion viewing from http://quaternions.online/
+                imu_data = [self.sensor_data['imu'].angular_velocity.x, self.sensor_data['imu'].angular_velocity.y,
+                    self.sensor_data['imu'].linear_acceleration.y, self.sensor_data['imu'].linear_acceleration.z]
+
+                # Check for extremities
+                for data in imu_data[:3]:
+                    if abs(data) > 0.5:
+                        print('extrema')
+                if abs(imu_data[-1]) > 10:
+                    print('gravitron overload') 
+
+                cmd_vel.publish(move_cmd)
+
                 # Gather some stats on how well we are moving for fitness
                 # calculate distance moved
                 # get the IMU data uniformity
                 
-             #   r.sleep()
+                r.sleep()
             
             
             # Poll the ROS topic for the IMU data
