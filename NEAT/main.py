@@ -25,8 +25,9 @@ class NEATNode:
         lidar_sub = rospy.Subscriber('/scan', LaserScan, self.callback, ('lidar'))
         
         print('Waiting for sensor data to come in...')
-        rospy.sleep(2)
-        
+        while 'imu' not in self.sensor_data and 'lidar' not in self.sensor_data:
+            pass
+        print('Ready')
         # Setup NEAT
         local_dir = os.path.dirname(__file__)
         config_path = os.path.join(local_dir, 'config-ann')
@@ -65,6 +66,7 @@ class NEATNode:
     
     def eval_genomes(self, genomes, config):
         for genome_id, genome in genomes:
+            print('evaluating genome {}'.format(genome_id))
             # Take the ANN from the population and pass it somewhere to be used
             net = neat.nn.FeedForwardNetwork.create(genome, config)
             
@@ -108,7 +110,7 @@ class NEATNode:
             #                          #
             ############################
             cmd_vel = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
-            r = rospy.Rate(10);
+            r = rospy.Rate(10)
             
             move_cmd = Twist()
             move_cmd.linear.x = 0.2
@@ -117,7 +119,7 @@ class NEATNode:
             # TODO: Should we use the covariances
             # TODO: Use motor goal to determine how far off we are from goal for noise
             for i in range(10):
-                
+                print('Moving')
                 # Angle and quaternion viewing from http://quaternions.online/
                 imu_data = [self.sensor_data['imu'].angular_velocity.x, self.sensor_data['imu'].angular_velocity.y,
                     self.sensor_data['imu'].linear_acceleration.y, self.sensor_data['imu'].linear_acceleration.z]
