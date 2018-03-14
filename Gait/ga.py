@@ -3,6 +3,15 @@ import ConfigParser
 import rospy
 from functools import total_ordering
 
+"""
+Things need to discuss:
+
+min-max angles for servos
+ROS topic and message details for sending the gait
+Test procedure for fitness evaluation (move straight line, whatever)
+Judging stability
+"""
+
 class Config:
     def __init__(self, filename):
         # Read the config file to have values for:
