@@ -20,6 +20,11 @@ import imutils
 import cv2
 from os import path
 
+# IMPORTANT
+# To connect Python to Google Maps Js/HTML, follow this:
+# https://stackoverflow.com/questions/47252632/how-to-pass-info-from-js-to-python-using-qwebchannel
+# https://github.com/eyllanesc/stackoverflow/tree/master/47252632
+
 maphtml = '''
 <!DOCTYPE html>
 <html>
@@ -180,7 +185,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.web = QWebEngineView(self.gps_map)
         self.web.setHtml(maphtml)
-
+        self.web.page().
         self.cv_widget = MainWidget()
         self.cv_widget.setFixedHeight(400)
         #self.cv_widget.setFixedWidth(400)
