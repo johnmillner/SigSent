@@ -19,6 +19,8 @@ import argparse
 import imutils
 import cv2
 from os import path
+from threading import Thread
+from time import sleep
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -185,7 +187,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.web = QWebEngineView(self.gps_map)
         self.web.setHtml(maphtml)
-        self.web.page().
+        #self.web.page().
         self.cv_widget = MainWidget()
         self.cv_widget.setFixedHeight(400)
         #self.cv_widget.setFixedWidth(400)
