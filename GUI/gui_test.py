@@ -25,6 +25,7 @@ from time import sleep
 import rospy
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix
 from cv_bridge import CvBridge, CvBridgeError
+from geometry_msgs.msg import PoseStamped
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -46,35 +47,89 @@ maphtml = '''
 </script>
 <script type="text/javascript">
 var map;
+var markers = [];
+var goal_markers = [];
+var red = "FE7569";
+var blue = "4245f4";
+var positionImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + red,
+    new google.maps.Size(21, 34),
+    new google.maps.Point(0,0),
+    new google.maps.Point(10, 34));
+var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + blue,
+    new google.maps.Size(21, 34),
+    new google.maps.Point(0,0),
+    new google.maps.Point(10, 34));
+
 function initialize() {
     var latlng = new google.maps.LatLng(28.6024556,-81.2023988,17);
     var myOptions = {
-                    zoom: 13,
+                    zoom: 17,
                     center: latlng,
                     mapTypeId: google.maps.MapTypeId.ROADMAP
                     };
      map = new google.maps.Map(document.getElementById("map_canvas"),
                                myOptions);
+    // This event listener will call addMarker() when the map is clicked.
+        map.addListener('click', function(event) {
+          _addMarker(event.latLng);
+        });
      doNothing();
  }
 
+    function _addMarker(location)
+    {
+        var marker = new google.maps.Marker({
+          position: location,
+          map: map,
+          icon: goalImage
+        });
+        for (var i = 0; i < goal_markers.length; i++) {
+          goal_markers[i].setMap(null);
+        }
+        goal_markers = [];
+
+        goal_markers.push(marker);
+    }
  function addMarker(lat, lng) {
   var myLatLng = new google.maps.LatLng(lat, lng);
-      var beachMarker = new google.maps.Marker({position: myLatLng,
-                                                map: map
+      var marker = new google.maps.Marker({position: myLatLng,
+                        map: map,
+                        icon: positionImage
                                                });
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(null);
+        }
+        markers = [];            
+        markers.push(marker);
+        markers.splice(0, 1);
+
  }
 
     function setCenter(lat, lng) {
         var myLatLng = new google.maps.LatLng(lat, lng);
         map.setCenter(myLatLng);    
     }
-
-    function doNothing()
+     function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(map);
+        }
+      }
+    function clearMap()
     {
-        return;
+                setMapOnAll(null);
+        markers = [];
+
+
     }
 
+
+    function get_goal()
+    {
+        if (goal_markers.length == 0)
+            return null;
+        
+        return {'lat': goal_markers[0].getPosition().lat(), 'lng': goal_markers[0].getPosition().lng()};
+    }
 </script>
 </head>
 <body onload="initialize();">
@@ -117,7 +172,6 @@ class RecordVideo(QtCore.QObject):
         to be able to do OpenCV operations in it.
         :param Image or CompressedImage image_msg: the message to transform
         """
-        rospy.loginfo("image is of type: " + str(type(image_msg)))
         type_as_str = str(type(image_msg))
         if type_as_str.find('sensor_msgs.msg._CompressedImage.CompressedImage') >= 0:
             # Image to numpy array
@@ -237,7 +291,12 @@ class Basestation(QMainWindow, Ui_MainWindow):
         
         self.run_button = QtWidgets.QPushButton('Start')
         self.run_button.clicked.connect(self.start_timer)
-        self.coords = (0,0)
+        self.coords = None if ROS else (28.6024556,-81.2023988)
+        self.seq = 0
+        
+        if ROS:
+            self.goal_pub = rospy.Publisher('/gps_goal_fix', NavSatFix, queue_size=1)
+
 
         if ROS:
             self.gps_sub = rospy.Subscriber('/fix',
@@ -249,7 +308,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.functionality.insertWidget(4,self.run_button)
     
     def start_timer(self):
-        self.timer.start(0, self)
+        self.timer.start(1000, self)
 
     def timerEvent(self, event):
         if (event.timerId() != self.timer.timerId()):
@@ -257,10 +316,27 @@ class Basestation(QMainWindow, Ui_MainWindow):
 
         if self.coords:
             frame = self.web.page().currentFrame()
-            frame.documentElement().evaluateJavaScript("setCenter(0,0)")
+            frame.documentElement().evaluateJavaScript("setCenter({},{})".format(*self.coords))
+            frame.documentElement().evaluateJavaScript("addMarker({},{})".format(*self.coords))
+            goal = frame.documentElement().evaluateJavaScript("get_goal()")
+            print(goal)
+            if goal and ROS:
+                fix = NavSatFix()
+                # lat is x
+                fix.latitude = goal['lat']
+                fix.longitude = goal['lng']
+                fix.altitude = 9.3
+                fix.header.frame_id = '/map'
+                fix.header.stamp = rospy.Time.now()
+                fix.header.seq = self.seq
+                fix.position_covariance_type = 1
+                self.seq += 1
+                if ROS:
+                    print(fix)
+                    self.goal_pub.publish(fix)
         
     def gps_callback(self, data):
-        self.coords = (data.longitude, data.latitude)
+        self.coords = (data.latitude, data.longitude)
 
 if __name__ == '__main__':
     if ROS:
