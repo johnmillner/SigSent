@@ -39,7 +39,7 @@
 		<rosparam file="$(find turtlebot_navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
 		<rosparam file="$(find turtlebot_navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />   
 		<rosparam file="$(find turtlebot_navigation)/param/local_costmap_params.yaml" command="load" />   
-		<rosparam file="$(find turtlebot_navigation)/param/global_costmap_params.yaml" command="load" />
+		<rosparam file="$(find sigsent)/params/global_costmap_params.yaml" command="load" />
 		<rosparam file="$(find turtlebot_navigation)/param/dwa_local_planner_params.yaml" command="load" />
 		<rosparam file="$(find turtlebot_navigation)/param/move_base_params.yaml" command="load" />
 		<rosparam file="$(find turtlebot_navigation)/param/global_planner_params.yaml" command="load" />
@@ -62,6 +62,7 @@
 		
 	</node>
 	
+	<!--
 	<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
 		<param name="output_frame" value="odom"/>
 		<param name="freq" value="30.0"/>
@@ -72,6 +73,7 @@
 		<param name="debug" value="false"/>
 		<param name="self_diagnose" value="false"/>
   	</node>
+  	-->
 
 </launch>
 
