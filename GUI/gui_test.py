@@ -10,7 +10,7 @@ from qgmap.common import QGoogleMap
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtWebKitWidgets import *
 from basestation_ui import Ui_MainWindow
 from imutils.object_detection import non_max_suppression
 from imutils import paths
@@ -102,7 +102,8 @@ class RecordVideo(QtCore.QObject):
 
         read, image = self.camera.read()
         if read:
-            self.image_data.emit(cv2.imread('images/person_454.bmp'))
+            image = imutils.resize(image, width=min(400, image.shape[1]))
+            self.image_data.emit(image)
 
 class PedestrianDetectionWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -116,7 +117,7 @@ class PedestrianDetectionWidget(QtWidgets.QWidget):
         self._min_size = (30, 30)
 
     def detect_people(self, image):
-        #image = imutils.resize(image, width=min(400, image.shape[1]))
+        
         orig = image.copy()
 
         # detect people in the image
@@ -185,7 +186,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
         self.setupUi(self)
-        self.web = QWebEngineView(self.gps_map)
+        self.web = QWebView(self.gps_map)
         self.web.setHtml(maphtml)
         #self.web.page().
         self.cv_widget = MainWidget()
