@@ -141,13 +141,18 @@ function initialize() {
 ROS = False
 
 class RecordVideo(QtCore.QObject):
-    image_data = QtCore.pyqtSignal(np.ndarray)
-
+    image_data = QtCore.pyqtSignal(object)
+    
     def __init__(self, camera_port=0, parent=None):
         super(RecordVideo, self).__init__(parent)
         self.camera = cv2.VideoCapture(camera_port)
         self.timer = QtCore.QBasicTimer()
-        
+        self.qthread = QThread()
+        self.people_detection_object = PedestrianDetection(self.image_data)
+        self.people_detection_object.moveToThread(self.qthread)
+        self.people_detection_object.finished.connect(self.qthread.quit)
+        self.qthread.start()
+
         if ROS:
             self.sub = rospy.Subscriber('/RasPiCam/image/compressed',
                                         CompressedImage,
@@ -163,13 +168,16 @@ class RecordVideo(QtCore.QObject):
 
         if ROS and self.last_img:
             image = self.img_to_cv2(self.last_img)
-            image = imutils.resize(image, width=min(400, image.shape[1]))
-            self.image_data.emit(image)
 
         else:
-            image = cv2.imread('images/person_010.bmp')
-            image = imutils.resize(image, width=min(400, image.shape[1]))
-            self.image_data.emit(image)
+            read, image = self.camera.read()
+            if not read:
+                image = cv2.imread('images/person_010.bmp')
+
+        image = imutils.resize(image, width=min(400, image.shape[1]))
+
+        self.people_detection_object.detect_people(image)
+        
 
     def img_to_cv2(self, image_msg):
         """
@@ -205,20 +213,18 @@ class RecordVideo(QtCore.QObject):
         self.last_img = image
         self.is_new_img = True
 
-class PedestrianDetectionWidget(QtWidgets.QWidget):
-    def __init__(self, cv_label, parent=None):
-        super(PedestrianDetectionWidget, self).__init__(parent)
-        self.cv_label = cv_label
+class PedestrianDetection(QObject):
+
+    finished = pyqtSignal()
+
+    def __init__(self, image_data_slot):
+        super(QObject, self).__init__()
+        
+        self.image_data_slot = image_data_slot
         self.hog = cv2.HOGDescriptor()
         self.hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-        
-        self.image = QtGui.QImage()
-        self._red = (0, 0, 255)
-        self._width = 2
-        self._min_size = (30, 30)
 
     def detect_people(self, image):
-        
         orig = image.copy()
 
         # detect people in the image
@@ -231,10 +237,22 @@ class PedestrianDetectionWidget(QtWidgets.QWidget):
         rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        return pick
+        self.image_data_slot.emit((pick, image))
+        
 
-    def image_data_slot(self, image_data):
-        people = self.detect_people(image_data)
+class PedestrianDetectionWidget(QtWidgets.QWidget):
+    def __init__(self, cv_label, parent=None):
+        super(PedestrianDetectionWidget, self).__init__(parent)
+        self.cv_label = cv_label
+        
+        self.image = QtGui.QImage()
+        self._red = (0, 0, 255)
+        self._width = 2
+        self._min_size = (30, 30)
+
+    def image_data_slot(self, people_detection):
+        people, image_data = people_detection
+        
         for (x, y, w, h) in people:
             cv2.rectangle(image_data, (x, y), (w, h), self._red, self._width)
 
