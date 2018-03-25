@@ -161,8 +161,13 @@ class RecordVideo(QtCore.QObject):
         if (event.timerId() != self.timer.timerId()):
             return
 
-        if self.last_img:
+        if ROS and self.last_img:
             image = self.img_to_cv2(self.last_img)
+            image = imutils.resize(image, width=min(400, image.shape[1]))
+            self.image_data.emit(image)
+
+        else:
+            image = cv2.imread('images/person_010.bmp')
             image = imutils.resize(image, width=min(400, image.shape[1]))
             self.image_data.emit(image)
 
@@ -201,8 +206,9 @@ class RecordVideo(QtCore.QObject):
         self.is_new_img = True
 
 class PedestrianDetectionWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, cv_label, parent=None):
         super(PedestrianDetectionWidget, self).__init__(parent)
+        self.cv_label = cv_label
         self.hog = cv2.HOGDescriptor()
         self.hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
         
@@ -234,11 +240,16 @@ class PedestrianDetectionWidget(QtWidgets.QWidget):
 
         self.image = self.get_qimage(image_data)
         if self.image.size() != self.size():
-            print('not size')
-            print(self.size(), self.image.size())
             self.setFixedSize(self.image.size())
 
         self.update()
+
+        if len(people) > 0:
+            self.cv_label.setText('Pedestrian Detected')
+            self.cv_label.setStyleSheet('QLabel { color : green; }')
+        else:
+            self.cv_label.setText('Pedestrian NOT Detected')
+            self.cv_label.setStyleSheet('QLabel { color : red; }')
 
     def get_qimage(self, image):
         height, width, colors = image.shape
@@ -256,9 +267,9 @@ class PedestrianDetectionWidget(QtWidgets.QWidget):
         self.image = QtGui.QImage()
 
 class MainWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, cv_widget, parent=None):
         super(MainWidget, self).__init__(parent)
-        self.people_detection_widget = PedestrianDetectionWidget()
+        self.people_detection_widget = PedestrianDetectionWidget(cv_widget)
 
         # TODO: set video port
         self.record_video = RecordVideo()
@@ -285,7 +296,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.web.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
         self.web.setHtml(maphtml)
         
-        self.cv_widget = MainWidget()
+        self.cv_widget = MainWidget(self.cv_label)
         self.cv_widget.setFixedHeight(400)
         self.functionality.insertWidget(1,self.cv_widget)
         
