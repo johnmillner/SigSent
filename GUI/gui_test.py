@@ -23,9 +23,9 @@ from os import path
 from threading import Thread
 from time import sleep
 import rospy
-from sensor_msgs.msg import Image, CompressedImage, NavSatFix
+from sensor_msgs.msg import Image, CompressedImage, NavSatFix, Joy
 from cv_bridge import CvBridge, CvBridgeError
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -306,6 +306,22 @@ class MainWidget(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+class TeleOp():
+    # rosparam set joy_node/dev "/dev/input/jsX"
+    # rosrun joy joy_node
+    # Add these to launch files so they launch with sigsent local.launch items
+    def __init__(self):
+        self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
+        self.teleop_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+
+    def joy_cb(self, data):
+        msg = Twist()
+
+        # Joystick state is published to /joy, need to test joystick for correct inputs
+        # Using those inputs, create a Twist() message here to send to the teleop node
+        self.teleop_pub.publish(msg)
+
+
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
@@ -323,6 +339,10 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.coords = None if ROS else (28.6024556,-81.2023988)
         self.seq = 0
         
+        # Should add a button or checkbox to enable or disable teleop input
+        # Important for sentry mode so that the teleop node doesn't interfere
+        self.teleop = TeleOp()
+
         if ROS:
             self.goal_pub = rospy.Publisher('/gps_goal_fix', NavSatFix, queue_size=1)
 
