@@ -138,7 +138,7 @@ function initialize() {
 </html>
 '''
 
-ROS = False
+ROS = True
 
 class RecordVideo(QtCore.QObject):
     image_data = QtCore.pyqtSignal(object)
@@ -313,12 +313,31 @@ class TeleOp():
     def __init__(self):
         self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
         self.teleop_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        
+        # Choose an upperbound for the twist value
+        self.speed = 2
+
+        self.teleop_enabled = False
+        self.checkbox = QCheckBox('Enable TeleOp')
+        self.checkbox.setChecked(False)
+        self.checkbox.toggled.connect(self.toggled_checkbox)
+
+    def toggled_checkbox(self):
+        self.teleop_enabled ^= True
 
     def joy_cb(self, data):
+        if not self.teleop_enabled:
+            return
+            
         msg = Twist()
 
         # Joystick state is published to /joy, need to test joystick for correct inputs
         # Using those inputs, create a Twist() message here to send to the teleop node
+        #               fwd  twist
+        # axes: [-0.0, -0.0, -0.0, 0.0, 0.0, 0.0]
+        msg.linear.x = self.speed * data.axes[1]
+        msg.angular.z = self.speed * data.axes[2]
+
         self.teleop_pub.publish(msg)
 
 
@@ -342,6 +361,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         # Should add a button or checkbox to enable or disable teleop input
         # Important for sentry mode so that the teleop node doesn't interfere
         self.teleop = TeleOp()
+        self.functionality.insertWidget(2, self.teleop.checkbox)
 
         if ROS:
             self.goal_pub = rospy.Publisher('/gps_goal_fix', NavSatFix, queue_size=1)
