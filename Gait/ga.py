@@ -1,7 +1,7 @@
 import random
 import ConfigParser
 import rospy
-from functools import total_ordering
+from gait import *
 
 """
 Things need to discuss:
@@ -35,36 +35,6 @@ class Config:
         self.angle_max = cfgParser.getint('Population', 'angle_max')
 
         self.node_name = cfgParser.get('ROS', 'node_name')
-
-class Step:
-    def __init__(self, states=None, angle_min=None, angle_max=None):
-        if states == None:
-            self.generate_states(angle_min, angle_max)
-        else:
-            self.states = states
-
-    def generate_states(self, angle_min, angle_max):
-        self.states = [random.randint(angle_min, angle_max) for i in range(3)]
-
-@total_ordering
-class Gait:
-    def __init__(self, steps=None, num_steps=None, angle_min=None, angle_max=None):
-        if steps == None:
-            self.generate_steps(num_steps, angle_min, angle_max)
-        else:
-            self.steps = steps
-
-        self.fitness = 0
-
-    def generate_steps(self, num_steps, angle_min, angle_max):
-        self.steps = [Step(angle_min, angle_max) for i in range(num_steps)]
-        
-    def __eq__(self, other):
-        return hasattr(other, 'fitness') and self.fitness == other.fitness
-
-    def __lt__(self, other):
-        return hasattr(other, 'fitness') and self.fitness < other.fitness
-
 
 class GA:
     def __init__(self, config):
