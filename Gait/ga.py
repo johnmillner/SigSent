@@ -4,6 +4,7 @@ import rospy
 import json
 from copy import deepcopy
 
+
 """
 Things need to discuss:
 
@@ -66,8 +67,8 @@ class MCU:
         
         # Open SPI 0 (idk why, thats the one) at 115200 baud
         self.spi = pi.spi_open(0, 115200)
-        
-    def send_gait_mcu(self, GeneratorExit):
+       
+    def send_gait_mcu(self, gait):
         """
         Sample Arduino SPI code RX
 
@@ -107,7 +108,8 @@ class MCU:
         """
         
         # Send each servo state for all possible 216 states (3 servos * 6 legs * 12 steps)
-        for step in gait.steps:
+        for step in self.gait.steps:
+
             for leg in step.legs:
                 for state in leg.states:
                     (count, rx_data) = self.pi.spi_xfer(self.spi, state)
