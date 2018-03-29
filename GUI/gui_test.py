@@ -125,12 +125,22 @@ function initialize() {
         goal_markers = []
     }
 
-    function get_goal()
+    function get_goals()
     {
         if (goal_markers.length == 0)
             return null;
+        var goals = [];
         
-        return {'lat': goal_markers[0].getPosition().lat(), 'lng': goal_markers[0].getPosition().lng()};
+        for (var i = 0; i < goal_markers.length; i++) {
+            goals.push(
+                {
+                    'lat': goal_markers[i].getPosition().lat(),
+                    'lng': goal_markers[i].getPosition().lng()
+                }
+            );    
+        }
+
+        return goals;
     }
 </script>
 </head>
@@ -369,8 +379,25 @@ class Maps():
                                         queue_size=1)
 
     def send_goals(self):
-        pass
-
+        frame = self.web.page().currentFrame()
+        goals = frame.documentElement().evaluateJavaScript("get_goals()")
+        
+        if goals and ROS:
+            # Do we need to add a delay here with a rospy.Rate() ?
+                for goal in goals:
+                    fix = NavSatFix()
+                    
+                    fix.latitude = goal['lat']
+                    fix.longitude = goal['lng']
+                    fix.altitude = 9.3
+                    fix.header.frame_id = '/map'
+                    fix.header.stamp = rospy.Time.now()
+                    fix.header.seq = self.seq
+                    fix.position_covariance_type = 1
+                    
+                    self.seq += 1
+                    self.goal_pub.publish(fix)
+        
     def clear_goals(self):
         frame = self.web.page().currentFrame()
         frame.documentElement().evaluateJavaScript("clearGoals()")
@@ -378,6 +405,7 @@ class Maps():
     def start_timer(self):
         self.timer.start(1000, self)
 
+    # Update robot marker position on map
     def timerEvent(self, event):
         if (event.timerId() != self.timer.timerId()):
             return
@@ -386,24 +414,7 @@ class Maps():
             frame = self.web.page().currentFrame()
             frame.documentElement().evaluateJavaScript("setCenter({},{})".format(*self.coords))
             frame.documentElement().evaluateJavaScript("addMarker({},{})".format(*self.coords))
-            goal = frame.documentElement().evaluateJavaScript("get_goal()")
-            print(goal)
-            if goal and ROS:
-                fix = NavSatFix()
-                
-                fix.latitude = goal['lat']
-                fix.longitude = goal['lng']
-                fix.altitude = 9.3
-                fix.header.frame_id = '/map'
-                fix.header.stamp = rospy.Time.now()
-                fix.header.seq = self.seq
-                fix.position_covariance_type = 1
-                self.seq += 1
-                
-                if ROS:
-                    print(fix)
-                    self.goal_pub.publish(fix)
-        
+            
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
 
