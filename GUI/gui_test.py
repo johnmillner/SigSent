@@ -83,11 +83,7 @@ function initialize() {
           map: map,
           icon: goalImage
         });
-        for (var i = 0; i < goal_markers.length; i++) {
-          goal_markers[i].setMap(null);
-        }
-        goal_markers = [];
-
+        
         goal_markers.push(marker);
     }
  function addMarker(lat, lng) {
@@ -95,7 +91,7 @@ function initialize() {
       var marker = new google.maps.Marker({position: myLatLng,
                         map: map,
                         icon: positionImage
-                                               });
+                    });
         for (var i = 0; i < markers.length; i++) {
           markers[i].setMap(null);
         }
@@ -118,10 +114,16 @@ function initialize() {
     {
                 setMapOnAll(null);
         markers = [];
-
-
     }
 
+    function clearGoals()
+    {
+        for (var i = 0; i < goal_markers.length; i++) {
+          goal_markers[i].setMap(null);
+        }
+
+        goal_markers = []
+    }
 
     function get_goal()
     {
@@ -340,32 +342,25 @@ class TeleOp():
 
         self.teleop_pub.publish(msg)
 
-
-class Basestation(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None):
-        super(Basestation, self).__init__(parent)
-        self.setupUi(self)
-        self.web = QWebView(self.gps_map)
+class Maps():
+    def __init__(self, parent):
+        self.web = QWebView(parent)
         self.web.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
         self.web.setHtml(maphtml)
         
-        self.cv_widget = MainWidget(self.cv_label)
-        self.cv_widget.setFixedHeight(400)
-        self.functionality.insertWidget(1,self.cv_widget)
+        self.timer = QtCore.QBasicTimer()
         
-        self.run_button = QtWidgets.QPushButton('Start')
-        self.run_button.clicked.connect(self.start_timer)
         self.coords = None if ROS else (28.6024556,-81.2023988)
         self.seq = 0
         
-        # Should add a button or checkbox to enable or disable teleop input
-        # Important for sentry mode so that the teleop node doesn't interfere
-        self.teleop = TeleOp()
-        self.functionality.insertWidget(2, self.teleop.checkbox)
+        self.clear_button = QtWidgets.QPushButton('Clear Goals')
+        self.clear_button.clicked.connect(self.clear_goals)
+
+        self.send_button = QtWidgets.QPushButton('Send Goals')
+        self.send_button.clicked.connect(self.send_goals)
 
         if ROS:
             self.goal_pub = rospy.Publisher('/gps_goal_fix', NavSatFix, queue_size=1)
-
 
         if ROS:
             self.gps_sub = rospy.Subscriber('/fix',
@@ -373,9 +368,13 @@ class Basestation(QMainWindow, Ui_MainWindow):
                                         self.gps_callback,
                                         queue_size=1)
 
-        self.timer = QtCore.QBasicTimer()
-        self.functionality.insertWidget(4,self.run_button)
-    
+    def send_goals(self):
+        pass
+
+    def clear_goals(self):
+        frame = self.web.page().currentFrame()
+        frame.documentElement().evaluateJavaScript("clearGoals()")
+
     def start_timer(self):
         self.timer.start(1000, self)
 
@@ -391,7 +390,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
             print(goal)
             if goal and ROS:
                 fix = NavSatFix()
-                # lat is x
+                
                 fix.latitude = goal['lat']
                 fix.longitude = goal['lng']
                 fix.altitude = 9.3
@@ -400,6 +399,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
                 fix.header.seq = self.seq
                 fix.position_covariance_type = 1
                 self.seq += 1
+                
                 if ROS:
                     print(fix)
                     self.goal_pub.publish(fix)
@@ -407,6 +407,27 @@ class Basestation(QMainWindow, Ui_MainWindow):
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
 
+class Basestation(QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(Basestation, self).__init__(parent)
+        self.setupUi(self)
+
+        self.maps = Maps(self.gps_map)
+        self.functionality.insertWidget(3,self.maps.clear_button)
+        self.functionality.insertWidget(3,self.maps.send_button)
+
+        self.cv_widget = MainWidget(self.cv_label)
+        self.cv_widget.setFixedHeight(400)
+        self.functionality.insertWidget(1,self.cv_widget)
+        
+        self.run_button = QtWidgets.QPushButton('Start')
+        self.run_button.clicked.connect(self.maps.start_timer)
+        self.functionality.insertWidget(4,self.run_button)
+        
+        self.teleop = TeleOp()
+        self.functionality.insertWidget(2, self.teleop.checkbox)
+
+        
 if __name__ == '__main__':
     if ROS:
         rospy.init_node('base_station_gui')
