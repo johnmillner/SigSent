@@ -1,9 +1,9 @@
 import random
 import ConfigParser
-import rospy
 import json
+import itertools
 from copy import deepcopy
-
+from functools import total_ordering
 
 """
 Things need to discuss:
@@ -16,7 +16,10 @@ Judging stability
 
 class Leg:
     def __init__(self, states):
-        self.states = states
+        self.states = list(states)
+
+    def __repr__(self):
+        return 'Leg: {}'.format(self.states)
 
 class Step:
     def __init__(self, legs=None, angle_min=None, angle_max=None):
@@ -26,18 +29,20 @@ class Step:
             self.legs = legs
 
     def generate_legs(self, angle_min, angle_max):
-        self.states = []
-
+        self.legs = []
+        
         for i in range(6):
+            states = []
             for j in range(3):
-
                 # min/max angles for each servo can be different, according to config
                 # i*3 + j gets us a value from [0, 17] to access a value for our 18 servos
-                self.states.append(
-                    Leg(
-                        [random.rantint(angle_min[i*3 + j], angle_max[i*3 + j])]
-                    )
-                )
+                states.append(random.randint(angle_min[i*3 + j], angle_max[i*3 + j]))
+            l = Leg(states)
+            
+            self.legs.append(Leg(states))
+
+    def __repr__(self):
+        return 'Step\n{}\n'.format(', '.join([str(leg) for leg in self.legs]))
 
 @total_ordering
 class Gait:
@@ -50,7 +55,7 @@ class Gait:
         self.fitness = 0
 
     def generate_steps(self, num_steps, angle_min, angle_max):
-        self.steps = [Step(angle_min, angle_max) for i in range(num_steps)]
+        self.steps = [Step(angle_min=angle_min, angle_max=angle_max) for i in range(num_steps)]
         
     def check_stability(self):
         return True
@@ -114,10 +119,6 @@ class MCU:
                 for state in leg.states:
                     (count, rx_data) = self.pi.spi_xfer(self.spi, state)
 
-class Leg:
-    def __init__(self, legs)
-        self.legs = legs
-
 class Config:
     def __init__(self, filename):
         # Read the config file to have values for:
@@ -161,22 +162,58 @@ class GA:
     def crossover(self, gait1, gait2):
         stable = False
 
+        legs1 = []
+        legs2 = []
+
+        # Technically with crossover here, we should have two children since swapping
+        # from parent1 or parent2 provides two unique combinations as a result
+        # but the paper only shows 1 offspring, so we will arbitrarily choose the 
+        # one where we take the modified gait1
+        new_gait = deepcopy(gait1)
+
+        # Zips the two steps lists into a tuple of each step object
+        # Appends the legs from each step object to a list of the total legs
+        for step1,step2 in zip(new_gait.steps, gait2.steps):
+            legs1 += step1.legs
+            legs2 += step2.legs
+
         while not stable:
-             for step in gait1
+            # Gets the cartesian product of the two leg lists for all
+            # possible pairwise combinations of legs
+            for leg1,leg2 in list(itertools.product(legs1, legs2)):
+
+                # If random value less than probability, swap the leg state values
+                # We don't have to modify leg2 since we said to arbitrarily choose the first gait
+                if random.random() < self.config.crossover_leg_probability:
+                    leg1.states = leg2.states
+            
+            stable = new_gait.check_stability()
+
+        return max(gait1, gait2, new_gait)
+            
 
     def mutate(self, gait):
         slicing_point = random.randint(0, len(gait.steps) - 1)
-        stable = False
         
+        stable = False
+        changed_one = False
+
         new_gait = deepcopy(gait)
 
         while not stable:
             # Go through the steps after and including the slicing point (so that step 0 can be chosen)
             for step in new_gait.steps[slicing_point:]:
                 for leg in step.legs:
-                    if random.random() <= self.config.crossover_leg_probability:
-                        for state in leg.states:
-                            state += self.config.mutation_change
+                    for state in leg.states:
+                        if random.random() <= self.config.mutation_servo_probability:
+                            changed_one = True
+                            if random.random() <= 0.49:
+                                state += self.config.mutation_change
+                            else:
+                                state -= self.config.mutation_change
+
+            if changed_one == False:
+                gait.steps[random.randint(0, 11)].legs[random.randint(0, 5)].states[random.randint(0,2)] -= self.config.mutation_change
 
             stable = new_gait.check_stability()
 
@@ -187,7 +224,7 @@ class GA:
     # Selects k random individuals and returns the most fit one
     def tournament_selection(self, population, tournament_size):
         index1 = random.randint(0, self.population_size - 1)
-        tournament_players = population[index1]
+        tournament_players = [population[index1]]
 
         for i in range(tournament_size):
             opponent = index1
@@ -204,44 +241,57 @@ class GA:
     def run(self, config):
         # Runs
         for run in range(self.num_runs):
-            population = self.generate_population(config)
             best_gait = None
-
+            self.generate_population()
+            
             for generation in range(self.num_generations):
                 # Evaluate the individuals somehow, probably going to have to run them through ROS
                 
-                for individual in population:
+                for individual in self.population:
                     individual.fitness = self.evaluate_individual(individual)
-
+                    
                 new_population = []
-
                 # Crossover time
-                for gait in population:
+                for gait in self.population:
                     if best_gait == None or gait.fitness > best_gait.fitness:
                         best_gait = gait
 
-                    gait1 = self.tournament_selection(population, config.tournament_size)
-                    gait2 = self.tournament_selection(population, config.tournament_size)
+                    gait1 = self.tournament_selection(self.population, config.tournament_size)
+                    gait2 = self.tournament_selection(self.population, config.tournament_size)
 
-                    if random.random <= config.crossover_probability:
-                        child = self.crossover(gait1, gait2)
-                        new_population.append(child)
+                    if random.random() <= config.crossover_probability:
+                        new_population.append(self.crossover(gait1, gait2))
                         
-                for gait in population:
-                    if random.random <= config.mutation_probability:
-                        self.mutate(gait, config.mutation_change)
+                for gait in self.population:
+                    if random.random() <= config.mutation_probability:
+                        new_population.append(self.mutate(gait))
                 
-                sorted_population = sorted(population)
+                sorted_population = sorted(self.population, reverse=True)
                 new_population += sorted_population[:self.population_size-len(new_population)]
+
+                self.population = new_population
+
+                print('Generation {}'.format(generation))
+                print('Average: {}'.format(self.average_fitness()))
+                print('Best: {}\n\n'.format(best_gait.fitness))
+            print(best_gait.steps)
                 # Should I reshuffle this array since most of it is sorted at this point? Add randomness to selection
 
+    def average_fitness(self):
+        avg = 0
+        for gait in self.population:
+            avg += gait.fitness
+        
+        return avg / len(self.population)
+    
     def evaluate_individual(self, gait):
-        under_30 = 0
         fitness = 0
+        
+        # silly example, GA looks for gaits with angles under 30 degrees
         for step in gait.steps:
             for leg in step.legs:
                 for state in leg.states:
-                    if state < under_30:
+                    if state < 30:
                         fitness += 1
 
         return fitness
@@ -249,8 +299,6 @@ class GA:
 
 if __name__ == '__main__':
     config = Config('config.cfg')
-
-    rospy.init_node(config.node_name)
 
     ga = GA(config)
     ga.run(config)
