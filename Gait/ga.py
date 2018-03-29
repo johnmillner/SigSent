@@ -2,6 +2,7 @@ import random
 import ConfigParser
 import rospy
 import json
+from copy import deepcopy
 
 """
 Things need to discuss:
@@ -50,6 +51,9 @@ class Gait:
     def generate_steps(self, num_steps, angle_min, angle_max):
         self.steps = [Step(angle_min, angle_max) for i in range(num_steps)]
         
+    def check_stability(self):
+        return True
+
     def __eq__(self, other):
         return hasattr(other, 'fitness') and self.fitness == other.fitness
 
@@ -57,14 +61,13 @@ class Gait:
         return hasattr(other, 'fitness') and self.fitness < other.fitness
 
 class MCU:
-    def __init__(self, gait=None):
-        self.gait = gait
+    def __init__(self):
         self.pi = pigpio.pi()
         
         # Open SPI 0 (idk why, thats the one) at 115200 baud
         self.spi = pi.spi_open(0, 115200)
         
-    def send_gait_mcu(self):
+    def send_gait_mcu(self, GeneratorExit):
         """
         Sample Arduino SPI code RX
 
@@ -104,7 +107,7 @@ class MCU:
         """
         
         # Send each servo state for all possible 216 states (3 servos * 6 legs * 12 steps)
-        for step in self.gait.steps:
+        for step in gait.steps:
             for leg in step.legs:
                 for state in leg.states:
                     (count, rx_data) = self.pi.spi_xfer(self.spi, state)
@@ -125,9 +128,10 @@ class Config:
         self.num_generations = cfgParser.getint('GA', 'num_generations')
         self.population_size = cfgParser.getint('GA', 'population_size')
         self.num_runs = cfgParser.getint('GA', 'num_runs')
-        self.crossover_probability = cfgParser.getint('GA', 'crossover_probability')
-        self.crossover_leg_probability = cfgParser.getint('GA', 'crossover_leg_probability')
-        self.mutation_probability = cfgParser.getint('GA', 'mutation_probability')
+        self.crossover_probability = cfgParser.getfloat('GA', 'crossover_probability')
+        self.crossover_leg_probability = cfgParser.getfloat('GA', 'crossover_leg_probability')
+        self.mutation_probability = cfgParser.getfloat('GA', 'mutation_probability')
+        self.mutation_servo_probability = cfgParser.getfloat('GA', 'mutation_servo_probability')
         self.tournament_size = cfgParser.getint('GA', 'tournament_size')
         self.mutation_change = cfgParser.getint('GA', 'mutation_change')
 
@@ -139,12 +143,13 @@ class Config:
 
 class GA:
     def __init__(self, config):
+        self.config = config
         self.num_generations = config.num_generations
         self.num_runs = config.num_runs
         self.population_size = config.population_size
-
-    def generate_population(self, config):
-        self.population = [Gait(num_steps=config.num_steps, angle_min=config.angle_min, angle_max=config.angle_max) 
+        
+    def generate_population(self):
+        self.population = [Gait(num_steps=self.config.num_steps, angle_min=self.config.angle_min, angle_max=self.config.angle_max) 
             for i in range(self.population_size)]
 
     # Write the state of the GA to a file to continue later
@@ -154,12 +159,28 @@ class GA:
     def crossover(self, gait1, gait2):
         stable = False
 
-        # TODO (rwales): Finish Xover process
         while not stable:
-             pass
+             for step in gait1
 
-    def mutate(self, gait, mutation_change):
-        pass
+    def mutate(self, gait):
+        slicing_point = random.randint(0, len(gait.steps) - 1)
+        stable = False
+        
+        new_gait = deepcopy(gait)
+
+        while not stable:
+            # Go through the steps after and including the slicing point (so that step 0 can be chosen)
+            for step in new_gait.steps[slicing_point:]:
+                for leg in step.legs:
+                    if random.random() <= self.config.crossover_leg_probability:
+                        for state in leg.states:
+                            state += self.config.mutation_change
+
+            stable = new_gait.check_stability()
+
+        new_gait.fitness = self.evaluate_individual(gait)
+
+        return max(gait, new_gait)
 
     # Selects k random individuals and returns the most fit one
     def tournament_selection(self, population, tournament_size):
@@ -187,6 +208,9 @@ class GA:
             for generation in range(self.num_generations):
                 # Evaluate the individuals somehow, probably going to have to run them through ROS
                 
+                for individual in population:
+                    individual.fitness = self.evaluate_individual(individual)
+
                 new_population = []
 
                 # Crossover time
@@ -209,6 +233,16 @@ class GA:
                 new_population += sorted_population[:self.population_size-len(new_population)]
                 # Should I reshuffle this array since most of it is sorted at this point? Add randomness to selection
 
+    def evaluate_individual(self, gait):
+        under_30 = 0
+        fitness = 0
+        for step in gait.steps:
+            for leg in step.legs:
+                for state in leg.states:
+                    if state < under_30:
+                        fitness += 1
+
+        return fitness
 
 
 if __name__ == '__main__':
