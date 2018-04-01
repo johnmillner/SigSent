@@ -157,7 +157,10 @@ class RecordVideo(QtCore.QObject):
     
     def __init__(self, camera_port=0, parent=None):
         super(RecordVideo, self).__init__(parent)
-        self.camera = cv2.VideoCapture(camera_port)
+        
+        if not ROS:
+            self.camera = cv2.VideoCapture(camera_port)
+            
         self.timer = QtCore.QBasicTimer()
         self.qthread = QThread()
         self.people_detection_object = PedestrianDetection(self.image_data)
@@ -165,11 +168,13 @@ class RecordVideo(QtCore.QObject):
         self.people_detection_object.finished.connect(self.qthread.quit)
         self.qthread.start()
 
+        self.last_img = None
+
         if ROS:
-            self.sub = rospy.Subscriber('/RasPiCam/image/compressed',
+            self.sub = rospy.Subscriber('/raspicam_node/image/compressed',
                                         CompressedImage,
                                         self.img_cb,
-                                        queue_size=1)
+                                        queue_size=10)
 
     def start_recording(self):
         self.timer.start(0, self)
@@ -178,19 +183,18 @@ class RecordVideo(QtCore.QObject):
         if (event.timerId() != self.timer.timerId()):
             return
 
-        if ROS and self.last_img:
-            image = self.img_to_cv2(self.last_img)
-
+        if ROS:
+            if self.last_img:
+                image = self.img_to_cv2(self.last_img)
+                image = imutils.resize(image, width=min(400, image.shape[1]))
+                self.people_detection_object.detect_people(image)
         else:
             read, image = self.camera.read()
             if not read:
                 image = cv2.imread('images/person_010.bmp')
-
-        image = imutils.resize(image, width=min(400, image.shape[1]))
-
-        self.people_detection_object.detect_people(image)
+                image = imutils.resize(image, width=min(400, image.shape[1]))
+                self.people_detection_object.detect_people(image)
         
-
     def img_to_cv2(self, image_msg):
         """
         Convert the image message into a cv2 image (numpy.ndarray)
@@ -222,6 +226,7 @@ class RecordVideo(QtCore.QObject):
         this last image and setting a flag that the image is new.
         :param Image or CompressedImage image: the data from the topic
         """
+        
         self.last_img = image
         self.is_new_img = True
 
@@ -324,7 +329,7 @@ class TeleOp():
     # Add these to launch files so they launch with sigsent local.launch items
     def __init__(self):
         self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
-        self.teleop_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        self.teleop_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
         
         # Choose an upperbound for the twist value
         self.speed = 2
@@ -349,11 +354,14 @@ class TeleOp():
         # axes: [-0.0, -0.0, -0.0, 0.0, 0.0, 0.0]
         msg.linear.x = self.speed * data.axes[1]
         msg.angular.z = self.speed * data.axes[2]
-
+        
+        print(msg)
+        
         self.teleop_pub.publish(msg)
 
 class Maps():
     def __init__(self, parent):
+        self.parent = parent
         self.web = QWebView(parent)
         self.web.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
         self.web.setHtml(maphtml)
@@ -403,7 +411,7 @@ class Maps():
         frame.documentElement().evaluateJavaScript("clearGoals()")
 
     def start_timer(self):
-        self.timer.start(1000, self)
+        self.timer.start(1000, self.parent)
 
     # Update robot marker position on map
     def timerEvent(self, event):
@@ -424,19 +432,20 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.maps = Maps(self.gps_map)
-        self.functionality.insertWidget(3,self.maps.clear_button)
-        self.functionality.insertWidget(3,self.maps.send_button)
+        self.run_button = QtWidgets.QPushButton('Read GPS')
+        self.run_button.clicked.connect(self.maps.start_timer)
+        self.maps_layout.insertWidget(3,self.maps.clear_button)
+        self.maps_layout.insertWidget(3,self.maps.send_button)
+        self.maps_layout.insertWidget(3,self.run_button)
 
         self.cv_widget = MainWidget(self.cv_label)
         self.cv_widget.setFixedHeight(400)
         self.functionality.insertWidget(1,self.cv_widget)
         
-        self.run_button = QtWidgets.QPushButton('Start')
-        self.run_button.clicked.connect(self.maps.start_timer)
-        self.functionality.insertWidget(4,self.run_button)
-        
         self.teleop = TeleOp()
         self.functionality.insertWidget(2, self.teleop.checkbox)
+
+        
 
         
 if __name__ == '__main__':
