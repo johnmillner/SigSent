@@ -1,28 +1,22 @@
 import sys
-"""
-sys.path.insert(0, './qMap')
-
-import qgmap
-qgmap.use('PyQt5')
-
-from qgmap.common import QGoogleMap
-"""
+import numpy as np
+import argparse
+import imutils
+import cv2
+import rospy
+import json
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import *
 from basestation_ui import Ui_MainWindow
 from imutils.object_detection import non_max_suppression
 from imutils import paths
-import numpy as np
-import argparse
-import imutils
-import cv2
 from os import path
 from threading import Thread
 from time import sleep
-import rospy
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, Twist
@@ -60,21 +54,56 @@ var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
     new google.maps.Point(0,0),
     new google.maps.Point(10, 34));
 
-function initialize() {
-    var latlng = new google.maps.LatLng(28.6024556,-81.2023988,17);
-    var myOptions = {
+    function initialize() {
+        var latlng = new google.maps.LatLng(28.6024556,-81.2023988,17);
+        var myOptions = {
                     zoom: 17,
                     center: latlng,
                     mapTypeId: google.maps.MapTypeId.ROADMAP
                     };
-     map = new google.maps.Map(document.getElementById("map_canvas"),
-                               myOptions);
-    // This event listener will call addMarker() when the map is clicked.
+        map = new google.maps.Map(document.getElementById("map_canvas"),
+                                myOptions);
+        // This event listener will call addMarker() when the map is clicked.
         map.addListener('click', function(event) {
-          _addMarker(event.latLng);
+            _addMarker(event.latLng);
         });
-     doNothing();
- }
+    }
+
+    function get_position()
+    {
+
+        var position = {'lat': '?', 'lng': '?'};
+        
+        if (markers.length > 0)
+        {
+            marker = markers[0];
+
+            position.lat = marker.getPosition().lat();
+            position.lng = marker.getPosition().lng();
+        }
+        
+        return position;
+    }
+
+    function get_goals()
+    {
+        if (goal_markers.length == 0)
+            return null;
+        var goals = [];
+        
+        for (var i = 0; i < goal_markers.length; i++) {
+            goals.push(
+                {
+                    'lat': goal_markers[i].getPosition().lat(),
+                    'lng': goal_markers[i].getPosition().lng()
+                }
+            );    
+        }
+
+        return goals;
+    }
+
+
 
     function _addMarker(location)
     {
@@ -85,6 +114,9 @@ function initialize() {
         });
         
         goal_markers.push(marker);
+        
+        self.update_goals_table(JSON.stringify(get_goals()));
+
     }
  function addMarker(lat, lng) {
   var myLatLng = new google.maps.LatLng(lat, lng);
@@ -123,24 +155,6 @@ function initialize() {
         }
 
         goal_markers = []
-    }
-
-    function get_goals()
-    {
-        if (goal_markers.length == 0)
-            return null;
-        var goals = [];
-        
-        for (var i = 0; i < goal_markers.length; i++) {
-            goals.push(
-                {
-                    'lat': goal_markers[i].getPosition().lat(),
-                    'lng': goal_markers[i].getPosition().lng()
-                }
-            );    
-        }
-
-        return goals;
     }
 </script>
 </head>
@@ -359,16 +373,25 @@ class TeleOp():
         
         self.teleop_pub.publish(msg)
 
-class Maps():
+class Maps(QObject):
     def __init__(self, parent):
+        super(Maps, self).__init__(parent)
         self.parent = parent
         self.web = QWebView(parent)
         self.web.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
         self.web.setHtml(maphtml)
+        self.web.page().mainFrame().addToJavaScriptWindowObject('self', self)
+
+        self.goals_table = QTableWidget(0, 2, parent)
+        self.goals_table.setHorizontalHeaderLabels(['Latitude','Longitude'])
+        self.table_header = self.goals_table.horizontalHeader()
+        self.table_header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)        
+        self.goals_table.setFixedHeight(300)
         
-        self.timer = QtCore.QBasicTimer()
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.timerEvent)
         
-        self.coords = None if ROS else (28.6024556,-81.2023988)
+        self.coords = (28.6024556,-81.2023988)
         self.seq = 0
         
         self.clear_button = QtWidgets.QPushButton('Clear Goals')
@@ -386,10 +409,21 @@ class Maps():
                                         self.gps_callback,
                                         queue_size=1)
 
+    @pyqtSlot(str)
+    def update_goals_table(self, map_str):
+        goals = json.loads(map_str)
+        self.goals_table.clear()
+        self.goals_table.setHorizontalHeaderLabels(['Latitude','Longitude'])
+        self.goals_table.setRowCount(len(goals))
+
+        for row,goal in enumerate(goals):
+            self.goals_table.setItem(row , 0, QTableWidgetItem(str(goal['lat'])))
+            self.goals_table.setItem(row , 1, QTableWidgetItem(str(goal['lng'])))
+
     def send_goals(self):
         frame = self.web.page().currentFrame()
         goals = frame.documentElement().evaluateJavaScript("get_goals()")
-        
+        print(goals)
         if goals and ROS:
             # Do we need to add a delay here with a rospy.Rate() ?
                 for goal in goals:
@@ -409,20 +443,28 @@ class Maps():
     def clear_goals(self):
         frame = self.web.page().currentFrame()
         frame.documentElement().evaluateJavaScript("clearGoals()")
+        self.goals_table.clear()
+        self.goals_table.setHorizontalHeaderLabels(['Latitude','Longitude'])
+        self.goals_table.setRowCount(0)
+
+    def set_coords_label(self, label):
+        print(label)
+        self.coords_label = label
 
     def start_timer(self):
-        self.timer.start(1000, self.parent)
+        self.timer.start(1000)
 
     # Update robot marker position on map
-    def timerEvent(self, event):
-        if (event.timerId() != self.timer.timerId()):
-            return
-
+    def timerEvent(self):
         if self.coords:
             frame = self.web.page().currentFrame()
             frame.documentElement().evaluateJavaScript("setCenter({},{})".format(*self.coords))
             frame.documentElement().evaluateJavaScript("addMarker({},{})".format(*self.coords))
+        
+            current_marker = frame.documentElement().evaluateJavaScript("get_position()")
             
+            self.coords_label.setText('Latitude: {}, Longitude: {}'.format(current_marker['lat'], current_marker['lng']))
+
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
 
@@ -432,6 +474,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.maps = Maps(self.gps_map)
+        self.maps.set_coords_label(self.coords_label)
         self.run_button = QtWidgets.QPushButton('Read GPS')
         self.run_button.clicked.connect(self.maps.start_timer)
         self.maps_layout.insertWidget(3,self.maps.clear_button)
@@ -445,7 +488,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.teleop = TeleOp()
         self.functionality.insertWidget(2, self.teleop.checkbox)
 
-        
+        self.maps_layout.addWidget(self.maps.goals_table)
 
         
 if __name__ == '__main__':
