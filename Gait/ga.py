@@ -2,8 +2,11 @@ import random
 import ConfigParser
 import json
 import itertools
+import pigpio
+import math
 from copy import deepcopy
 from functools import total_ordering
+from time import sleep
 
 """
 Things need to discuss:
@@ -71,7 +74,7 @@ class MCU:
         self.pi = pigpio.pi()
         
         # Open SPI 0 (idk why, thats the one) at 115200 baud
-        self.spi = pi.spi_open(0, 115200)
+        self.spi = self.pi.spi_open(0, 115200)
        
     def send_gait_mcu(self, gait):
         """
@@ -114,10 +117,14 @@ class MCU:
         
         # Send each servo state for all possible 216 states (3 servos * 6 legs * 12 steps)
         for step in self.gait.steps:
-
             for leg in step.legs:
                 for state in leg.states:
                     (count, rx_data) = self.pi.spi_xfer(self.spi, state)
+                    print('Sending {}'.format(state))
+                    sleep(0.05)
+
+    def degrees_to_servo(self, deg):
+        return math.ceil(val = deg/.293)
 
 class Config:
     def __init__(self, filename):
