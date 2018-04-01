@@ -19,7 +19,7 @@
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
     <node name="imu" pkg="razor_imu_9dof_14001" type="razor.py" respawn="true" output="screen"/>
 
-<!-- JTM - transform -->
+	<!-- JTM - transform -->
     <node name="tf_imu" pkg="tf" type="static_transform_publisher" args="0 0 1 0 0 0 /base_link /imu 10" />
 
     <!-- JTM - Sparkfun Venus638FLPx -->
@@ -53,6 +53,6 @@
 
     <!-- JTM - transform -->
     <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 6 0 0 0 /base_link /laser 10" />
--->
+
     
 </launch>
