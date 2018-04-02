@@ -5,6 +5,7 @@ import imutils
 import cv2
 import rospy
 import json
+import roslib
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -20,6 +21,10 @@ from time import sleep
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, Twist
+
+roslib.load_manifest('sigsent')
+
+from sigsent.msg import GPSList
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -342,8 +347,9 @@ class TeleOp():
     # rosrun joy joy_node
     # Add these to launch files so they launch with sigsent local.launch items
     def __init__(self):
-        self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
-        self.teleop_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
+        if ROS:
+            self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
+            self.teleop_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
         
         # Choose an upperbound for the twist value
         self.speed = 2
@@ -368,8 +374,6 @@ class TeleOp():
         # axes: [-0.0, -0.0, -0.0, 0.0, 0.0, 0.0]
         msg.linear.x = self.speed * data.axes[1]
         msg.angular.z = self.speed * data.axes[2]
-        
-        print(msg)
         
         self.teleop_pub.publish(msg)
 
@@ -401,14 +405,13 @@ class Maps(QObject):
         self.send_button.clicked.connect(self.send_goals)
 
         if ROS:
-            self.goal_pub = rospy.Publisher('/gps_goal_fix', NavSatFix, queue_size=1)
+            self.goal_pub = rospy.Publisher('/gps_goals_list', GPSList, queue_size=1)
 
-        if ROS:
             self.gps_sub = rospy.Subscriber('/fix',
                                         NavSatFix,
                                         self.gps_callback,
                                         queue_size=1)
-
+        
     @pyqtSlot(str)
     def update_goals_table(self, map_str):
         goals = json.loads(map_str)
@@ -425,20 +428,23 @@ class Maps(QObject):
         goals = frame.documentElement().evaluateJavaScript("get_goals()")
         print(goals)
         if goals and ROS:
-            # Do we need to add a delay here with a rospy.Rate() ?
-                for goal in goals:
-                    fix = NavSatFix()
-                    
-                    fix.latitude = goal['lat']
-                    fix.longitude = goal['lng']
-                    fix.altitude = 9.3
-                    fix.header.frame_id = '/map'
-                    fix.header.stamp = rospy.Time.now()
-                    fix.header.seq = self.seq
-                    fix.position_covariance_type = 1
-                    
-                    self.seq += 1
-                    self.goal_pub.publish(fix)
+            goals_msg = GPSList()
+            for goal in goals:
+                fix = NavSatFix()
+                
+                fix.latitude = goal['lat']
+                fix.longitude = goal['lng']
+                fix.altitude = 9.3
+                fix.header.frame_id = '/map'
+                fix.header.stamp = rospy.Time.now()
+                fix.header.seq = self.seq
+                fix.position_covariance_type = 1
+                
+                self.seq += 1
+
+                goals_msg.goals.append(fix)
+            print(goals_msg)
+            self.goal_pub.publish(goals_msg)
         
     def clear_goals(self):
         frame = self.web.page().currentFrame()
@@ -448,7 +454,6 @@ class Maps(QObject):
         self.goals_table.setRowCount(0)
 
     def set_coords_label(self, label):
-        print(label)
         self.coords_label = label
 
     def start_timer(self):
@@ -463,7 +468,8 @@ class Maps(QObject):
         
             current_marker = frame.documentElement().evaluateJavaScript("get_position()")
             
-            self.coords_label.setText('Latitude: {}, Longitude: {}'.format(current_marker['lat'], current_marker['lng']))
+            if current_marker:
+                self.coords_label.setText('Latitude: {}, Longitude: {}'.format(current_marker['lat'], current_marker['lng']))
 
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
