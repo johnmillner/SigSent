@@ -51,33 +51,9 @@
     <!-- JTM - transform -->
     <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 6 0 0 0 /base_link /laser 10" />
     <!--<node name="tf_footprint" pkg="tf" type="static_transform_publisher" args="0 0 -.2 0 0 0  /base_footprint /base_link 10" />
--->
-    
-    <!-- REW - Joystick listener -->
-    <node respawn="true" pkg="joy" type="joy_node" name="joy" >
-        <param name="dev" type="string" value="/dev/input/js0" />
-        <param name="deadzone" value="0.05" />
-    </node>
+--> 
 
-    <!-- REW - Audio Out (Base Station) -->
-    <!-- arecord -l will show available input devices, use the car number as
-      the first number and the subdevice number as the second in a string
-      like hw:1,0 -->
-    <arg name="device" default=""/>
-    <arg name="channels" default="1"/>
-    <arg name="sample_rate" default="16000"/>
-
-    <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
-        <param name="bitrate" value="128"/>
-        <param name="device" value="$(arg device)"/>
-        <param name="channels" value="$(arg channels)"/>
-        <param name="sample_rate" value="$(arg sample_rate)"/>
-    </node>
+    <!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
+    <node name="lightbar" pkg="sigsent" type="lightbar.py" />
     
-    <!-- REW - Audio In (Robot to Base Station) -->
-    <node name="audio_play_base" pkg="audio_play" type="audio_play" output="screen">
-        <param name="dst" value="alsasink"/>
-    </node>
-    
-
 </launch>

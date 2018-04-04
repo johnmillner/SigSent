@@ -20,6 +20,7 @@ from imutils import paths
 from os import path
 from threading import Thread
 from time import sleep
+from std_msgs.msg import Int8
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, Twist
@@ -342,41 +343,35 @@ class Maps(QObject):
         self.coords = (data.latitude, data.longitude)
 
 class Lightbar():
-    def __init__(self, pi):
+    def __init__(self):
         self.light_on = False
         self.checkbox = QCheckBox('Enable Light')
         self.checkbox.setChecked(False)
         self.checkbox.toggled.connect(self.toggled_checkbox)
-        self.pi = pi
-
-        #BCM17, which is physical pin 11
-        self.lightbar_pin = 11
-
-        try:
-            self.pi.set_mode(self.lightbar_pin, pigpio.OUTPUT)
-            self.pi.write(self.lightbar_pin, 0)
-            self.pi_enabled = True
-        except Exception as e:
-            self.pi_enabled = False
-            print(e)
+        
+        self.strobe_button = QtWidgets.QPushButton('Strobe')
+        self.strobe_button.clicked.connect(self.strobe)
+        
+        self.light_pub = rospy.Publisher('/blind', Int8, queue_size=10)
 
     def toggled_checkbox(self):
-        try:
-            if not self.pi_enabled:
-                return
-                
-            if self.light_on:
-                self.pi.write(self.lightbar_pin, 1)
-            self.light_on ^= True
-        except Exception as e:
-            print(e)
+        self.light_on ^= True
+        msg = Int8()
+        msg.data = int(self.light_on)
 
+        self.light_pub.publish(msg)
+
+    # Strobe light to alert pedestrians, then reset to light off
+    def strobe(self):
+        msg = Int8()
+        msg.data = 2
+
+        self.light_pub.publish(msg)
+        
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
         self.setupUi(self)
-
-        self.pi = pigpio.pi()
 
         self.maps = Maps(self.gps_map)
         self.maps.set_coords_label(self.coords_label)
@@ -393,8 +388,9 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.teleop = TeleOp()
         self.user_tools.insertWidget(0, self.teleop.checkbox)
 
-        self.lightbar = Lightbar(self.pi)
+        self.lightbar = Lightbar()
         self.user_tools.insertWidget(1, self.lightbar.checkbox)
+        self.user_tools.insertWidget(2, self.lightbar.strobe_button)
 
         self.maps_layout.addWidget(self.maps.goals_table)
 
