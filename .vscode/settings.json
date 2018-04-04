@@ -1,6 +1,0 @@
-{
-    "python.linting.enabled": false,
-    "files.associations": {
-        "ioctl.h": "c"
-    }
-}
