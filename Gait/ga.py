@@ -77,51 +77,11 @@ class MCU:
         self.spi = self.pi.spi_open(0, 115200)
        
     def send_gait_mcu(self, gait):
-        """
-        Sample Arduino SPI code RX
-
-        char step = 0;
-        char leg = 0;
-        char servo = 0;
-
-        int[][][] gait = new int[12][6][3];
-
-        // SPI interrupt routine
-        ISR (SPI_STC_vect)
-        {
-            // grab byte from SPI Data Register
-            byte data = SPDR;
-            
-            char num_servos_set = (step * servo * leg + leg * servo + servo);
-
-            // Add to gait if we haven't set everything
-            if (num_servos_set < sizeof gait)
-            {
-                gait[step][leg][servo] = data;
-
-                servo++;
-
-                if (servo > 2)
-                {
-                    servo = 0;
-                    leg++;
-
-                    if (leg > 5)
-                    {
-                        step++;
-                    }
-                }
-            }
-        }
-        """
-        
         # Send each servo state for all possible 216 states (3 servos * 6 legs * 12 steps)
         for step in self.gait.steps:
             for leg in step.legs:
                 for state in leg.states:
                     (count, rx_data) = self.pi.spi_xfer(self.spi, state)
-                    print('Sending {}'.format(state))
-                    sleep(0.05)
 
     def degrees_to_servo(self, deg):
         return math.ceil(val = deg/.293)
@@ -199,7 +159,7 @@ class GA:
         return max(gait1, gait2, new_gait)
             
 
-    def mutate(self, gait):
+    def mutate(self, gait, config):
         slicing_point = random.randint(0, len(gait.steps) - 1)
         
         stable = False
@@ -210,14 +170,21 @@ class GA:
         while not stable:
             # Go through the steps after and including the slicing point (so that step 0 can be chosen)
             for step in new_gait.steps[slicing_point:]:
-                for leg in step.legs:
-                    for state in leg.states:
+                for i,leg in enumerate(step.legs):
+                    for j,state in enumerate(leg.states):
                         if random.random() <= self.config.mutation_servo_probability:
                             changed_one = True
                             if random.random() <= 0.49:
                                 state += self.config.mutation_change
                             else:
                                 state -= self.config.mutation_change
+                            
+                            # Restrict state to be within the angle_min and angle_max
+                            # Overflow into the correct value
+                            if state > config.angle_max[i*3 + j]:
+                                state = config.angle_min[i*3 + j] + (state - config.angle_max[i*3 + j])
+                            elif state < config.angle_min[i*3 + j]:
+                                state = config.angle_max[i*3 + j] - (config.angle_min[i*3 + j] - val)
 
             if changed_one == False:
                 gait.steps[random.randint(0, 11)].legs[random.randint(0, 5)].states[random.randint(0,2)] -= self.config.mutation_change
@@ -271,7 +238,7 @@ class GA:
                         
                 for gait in self.population:
                     if random.random() <= config.mutation_probability:
-                        new_population.append(self.mutate(gait))
+                        new_population.append(self.mutate(gait, config))
                 
                 sorted_population = sorted(self.population, reverse=True)
                 new_population += sorted_population[:self.population_size-len(new_population)]
