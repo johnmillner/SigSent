@@ -46,6 +46,9 @@
         </widget>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="user_tools"/>
+       </item>
+       <item>
         <widget class="QLabel" name="battery_label">
          <property name="maximumSize">
           <size>

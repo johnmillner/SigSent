@@ -6,6 +6,8 @@ import cv2
 import rospy
 import json
 import roslib
+import pigpio
+import qdarkstyle
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -64,7 +66,88 @@ var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
         var myOptions = {
                     zoom: 17,
                     center: latlng,
-                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    styles: 
+                        [
+                            {
+                                "featureType": "administrative",
+                                "elementType": "labels.text.fill",
+                                "stylers": [
+                                    {
+                                        "color": "#444444"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "landscape",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "color": "#f2f2f2"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "poi",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "visibility": "off"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "road",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "saturation": -100
+                                    },
+                                    {
+                                        "lightness": 45
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "road.highway",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "visibility": "simplified"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "road.arterial",
+                                "elementType": "labels.icon",
+                                "stylers": [
+                                    {
+                                        "visibility": "off"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "transit",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "visibility": "off"
+                                    }
+                                ]
+                            },
+                            {
+                                "featureType": "water",
+                                "elementType": "all",
+                                "stylers": [
+                                    {
+                                        "color": "#4f595d"
+                                    },
+                                    {
+                                        "visibility": "on"
+                                    }
+                                ]
+                            }
+                        ]
                     };
         map = new google.maps.Map(document.getElementById("map_canvas"),
                                 myOptions);
@@ -190,7 +273,7 @@ class RecordVideo(QtCore.QObject):
         self.last_img = None
 
         if ROS:
-            self.sub = rospy.Subscriber('/raspicam_node/image/compressed',
+            self.sub = rospy.Subscriber('/RasPiCam/image/compressed',
                                         CompressedImage,
                                         self.img_cb,
                                         queue_size=10)
@@ -474,6 +557,27 @@ class Maps(QObject):
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
 
+class Lightbar():
+    def __init__(self, pi):
+        self.light_on = False
+        self.checkbox = QCheckBox('Enable TeleOp')
+        self.checkbox.setChecked(False)
+        self.checkbox.toggled.connect(self.toggled_checkbox)
+        self.pi = pi
+
+        #BCM17, which is physical pin 11
+        self.lightbar_pin = 11
+
+        self.pi.set_mode(self.lightbar_pin, pigpio.OUTPUT)
+        self.pi.write(self.lightbar_pin, 0)
+
+    def toggled_checkbox(self):
+        self.light_on ^= True
+
+        if self.light_on:
+            self.pi.write(self.lightbar_pin, 1)
+        
+
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
@@ -492,24 +596,22 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.functionality.insertWidget(1,self.cv_widget)
         
         self.teleop = TeleOp()
-        self.functionality.insertWidget(2, self.teleop.checkbox)
+        self.user_tools.insertWidget(2, self.teleop.checkbox)
 
         self.maps_layout.addWidget(self.maps.goals_table)
+
+        self.pi = pigpio.pi()
 
         
 if __name__ == '__main__':
     if ROS:
         rospy.init_node('base_station_gui')
     
-    #Qt initialization stuff
-    #Create an object of the class QApplication to host everything
     app = QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    #form is an object of the class defined above
-    bs = Basestation()
-
-    #Show the UI elements
+    bs = Basestation()    
     bs.show()
-    
+
     #Exit the application when the Qt window closes
     sys.exit(app.exec_())
