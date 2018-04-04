@@ -123,6 +123,14 @@ class GA:
             for i in range(self.population_size)]
 
     # Write the state of the GA to a file to continue later
+    """
+    Things to save:
+
+    Run
+    Generation
+    Population
+    
+    """
     def save_checkpoint(self):
         pass
 
