@@ -19,6 +19,9 @@
     <!-- JTM - Sparkfun Razor IMU 9DoF 14001 -->
     <node name="imu" pkg="razor_imu_9dof_14001" type="razor.py" respawn="true" output="screen"/>
 
+	<!-- JTM - transform -->
+    <node name="tf_imu" pkg="tf" type="static_transform_publisher" args="0 0 1 0 0 0 /base_link /imu 10" />
+
     <!-- JTM - Sparkfun Venus638FLPx -->
     <node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" output="screen">
         <param name="port" type="string" value="/dev/ttyS0" />
@@ -50,10 +53,12 @@
 
     <!-- JTM - transform -->
     <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 6 0 0 0 /base_link /laser 10" />
+
     <!--<node name="tf_footprint" pkg="tf" type="static_transform_publisher" args="0 0 -.2 0 0 0  /base_footprint /base_link 10" />
 --> 
 
     <!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
     <node name="lightbar" pkg="sigsent" type="lightbar.py" />
+
     
 </launch>
