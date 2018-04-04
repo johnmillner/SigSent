@@ -114,7 +114,6 @@ class RecordVideo(QtCore.QObject):
         self.is_new_img = True
 
 class PedestrianDetection(QObject):
-
     finished = pyqtSignal()
 
     def __init__(self, image_data_slot):
@@ -345,7 +344,7 @@ class Maps(QObject):
 class Lightbar():
     def __init__(self, pi):
         self.light_on = False
-        self.checkbox = QCheckBox('Enable TeleOp')
+        self.checkbox = QCheckBox('Enable Light')
         self.checkbox.setChecked(False)
         self.checkbox.toggled.connect(self.toggled_checkbox)
         self.pi = pi
@@ -353,20 +352,31 @@ class Lightbar():
         #BCM17, which is physical pin 11
         self.lightbar_pin = 11
 
-        self.pi.set_mode(self.lightbar_pin, pigpio.OUTPUT)
-        self.pi.write(self.lightbar_pin, 0)
+        try:
+            self.pi.set_mode(self.lightbar_pin, pigpio.OUTPUT)
+            self.pi.write(self.lightbar_pin, 0)
+            self.pi_enabled = True
+        except Exception as e:
+            self.pi_enabled = False
+            print(e)
 
     def toggled_checkbox(self):
-        self.light_on ^= True
-
-        if self.light_on:
-            self.pi.write(self.lightbar_pin, 1)
-        
+        try:
+            if not self.pi_enabled:
+                return
+                
+            if self.light_on:
+                self.pi.write(self.lightbar_pin, 1)
+            self.light_on ^= True
+        except Exception as e:
+            print(e)
 
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
         self.setupUi(self)
+
+        self.pi = pigpio.pi()
 
         self.maps = Maps(self.gps_map)
         self.maps.set_coords_label(self.coords_label)
@@ -381,11 +391,12 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.functionality.insertWidget(1,self.cv_widget)
         
         self.teleop = TeleOp()
-        self.user_tools.insertWidget(2, self.teleop.checkbox)
+        self.user_tools.insertWidget(0, self.teleop.checkbox)
+
+        self.lightbar = Lightbar(self.pi)
+        self.user_tools.insertWidget(1, self.lightbar.checkbox)
 
         self.maps_layout.addWidget(self.maps.goals_table)
-
-        self.pi = pigpio.pi()
 
         
 if __name__ == '__main__':

@@ -80,7 +80,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "SigSent Station"))
         self.camera_label.setText(_translate("MainWindow", "Camera Feed"))
         self.battery_label.setText(_translate("MainWindow", "Battery"))
         self.neat_label.setText(_translate("MainWindow", "NEAT Output: Crutches Engaged"))
