@@ -1,4 +1,5 @@
 build/
+catkin_ws/devel
 bin/
 lib/
 msg_gen/
