@@ -55,7 +55,7 @@ class RecordVideo(QtCore.QObject):
         self.last_img = None
 
         if ROS:
-            self.sub = rospy.Subscriber('/RasPiCam/image/compressed',
+            self.sub = rospy.Subscriber('/pseye_camera/image_raw/compressed',
                                         CompressedImage,
                                         self.img_cb,
                                         queue_size=10)
