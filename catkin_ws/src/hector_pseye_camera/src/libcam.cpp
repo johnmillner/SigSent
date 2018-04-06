@@ -200,7 +200,7 @@ void Camera::Init() {
     fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width       = width;
     fmt.fmt.pix.height      = height;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB332;
     fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
 

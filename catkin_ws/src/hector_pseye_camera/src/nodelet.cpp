@@ -43,8 +43,8 @@ public:
     update_timer_ = pn.createTimer(ros::Duration(1.0/(static_cast<double>(p_fps_))), &HectorPsEyeCameraNodelet::timerPublishImageCallback, this, false );
 
     cv_img_.header.frame_id = p_frame_name_;
-    cv_img_.encoding = sensor_msgs::image_encodings::MONO8;
-    cv_img_.image = cv::Mat(img_height,img_width,CV_8UC1);
+    cv_img_.encoding = sensor_msgs::image_encodings::RGB8;
+    cv_img_.image = cv::Mat(img_height,img_width,CV_8UC3);
 
     //cv::Mat* img = &cvImg.image;
   }
@@ -63,7 +63,7 @@ public:
     if (retrieve_image){
       camera_->Update(true);
       ros::Time capture_time = ros::Time::now();
-      camera_->toMonoMat(&cv_img_.image);
+      //camera_->toMonoMat(&cv_img_.image);
       
       cv_img_.header.stamp = capture_time;
 

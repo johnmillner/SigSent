@@ -1,0 +1,11 @@
+{
+    "python.linting.pylintEnabled": false,
+    "files.associations": {
+        "algorithm": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp",
+        "random": "cpp",
+        "ratio": "cpp",
+        "valarray": "cpp"
+    }
+}

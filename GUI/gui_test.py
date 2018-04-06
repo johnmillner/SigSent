@@ -44,7 +44,8 @@ class RecordVideo(QtCore.QObject):
         
         if not ROS:
             self.camera = cv2.VideoCapture(camera_port)
-            
+        
+        self.bridge = CvBridge()            
         self.timer = QtCore.QBasicTimer()
         self.qthread = QThread()
         self.people_detection_object = PedestrianDetection(self.image_data)
@@ -55,8 +56,8 @@ class RecordVideo(QtCore.QObject):
         self.last_img = None
 
         if ROS:
-            self.sub = rospy.Subscriber('/pseye_camera/image_raw/compressed',
-                                        CompressedImage,
+            self.sub = rospy.Subscriber('/pseye_camera/image_raw',
+                                        Image,
                                         self.img_cb,
                                         queue_size=10)
 
