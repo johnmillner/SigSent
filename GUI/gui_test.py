@@ -56,8 +56,8 @@ class RecordVideo(QtCore.QObject):
         self.last_img = None
 
         if ROS:
-            self.sub = rospy.Subscriber('/pseye_camera/image_raw',
-                                        Image,
+            self.sub = rospy.Subscriber('/usb_cam/image_raw/compressed',
+                                        CompressedImage,
                                         self.img_cb,
                                         queue_size=10)
 
@@ -198,14 +198,19 @@ class MainWidget(QtWidgets.QWidget):
         image_data_slot = self.people_detection_widget.image_data_slot
         self.record_video.image_data.connect(image_data_slot)
         # connect the run button to the start recording slot
-        self.run_button.clicked.connect(self.record_video.start_recording)
+        self.run_button.clicked.connect(self.started_video)
 
         # Create and set the layout
         layout = QtWidgets.QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.people_detection_widget)
         layout.addWidget(self.run_button)
 
         self.setLayout(layout)
+
+    def started_video(self):
+        self.record_video.start_recording()
+        self.run_button.setHidden(True)
 
 class TeleOp():
     # rosparam set joy_node/dev "/dev/input/jsX"
@@ -383,8 +388,10 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.maps_layout.insertWidget(3,self.run_button)
 
         self.cv_widget = MainWidget(self.cv_label)
-        self.cv_widget.setFixedHeight(400)
+        self.cv_widget.setFixedHeight(360)
         self.functionality.insertWidget(1,self.cv_widget)
+        #self.functionality.setAlignment(Qt.Align)
+        #self.functionality.setAlignment(self.cv_widget, Qt.AlignCenter)
         
         self.teleop = TeleOp()
         self.user_tools.insertWidget(0, self.teleop.checkbox)
