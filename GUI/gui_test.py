@@ -373,7 +373,7 @@ class Lightbar():
         msg.data = 2
 
         self.light_pub.publish(msg)
-        
+
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
@@ -390,8 +390,6 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.cv_widget = MainWidget(self.cv_label)
         self.cv_widget.setFixedHeight(360)
         self.functionality.insertWidget(1,self.cv_widget)
-        #self.functionality.setAlignment(Qt.Align)
-        #self.functionality.setAlignment(self.cv_widget, Qt.AlignCenter)
         
         self.teleop = TeleOp()
         self.user_tools.insertWidget(0, self.teleop.checkbox)
@@ -402,7 +400,6 @@ class Basestation(QMainWindow, Ui_MainWindow):
 
         self.maps_layout.addWidget(self.maps.goals_table)
 
-        
 if __name__ == '__main__':
     if ROS:
         rospy.init_node('base_station_gui')
