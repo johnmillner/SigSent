@@ -3,8 +3,8 @@ alwaysOn: true
 frequency: 10.0
 minFreq: 10.0
 maxFreq: 100.0
-highVTh: 13.8
-lowVTh: 11.0
+highVTh: 16.8
+lowVTh: 12.8
 maxCurr: 10.0
-batCapacity: 13000.0
-lowCapacity: 7000.0
+batCapacity: 10000.0
+lowCapacity: 500.0
