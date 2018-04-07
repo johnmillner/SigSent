@@ -1,0 +1,1 @@
+https://answers.ros.org/question/11948/create-rough-terrain-for-used-in-gazebo/

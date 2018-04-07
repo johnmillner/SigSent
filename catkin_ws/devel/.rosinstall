@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /home/rwales/SigSent/catkin_ws/devel/setup.sh
+    local-name: /home/basestation/SigSent/catkin_ws/devel/setup.sh

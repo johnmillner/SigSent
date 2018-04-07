@@ -1,0 +1,164 @@
+<!--    John Millner
+        Sigsent 
+        Group 11
+-->
+
+<launch>
+    <!-- put nodes meant to run on the basestation computer here -->
+	
+	<!-- Joystick 
+	<node respawn="false" pkg="joy" type="joy_node" name="joy" >
+        <param name="dev" type="string" value="/dev/input/js0" />
+        <param name="deadzone" value="0.05" />
+    </node>-->
+
+	<!-- GPS goal -->
+    <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
+    
+    <!-- transform -->
+    <!--<node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 1 0 0 0 /base_link /laser 10" />-->
+    
+	<!-- SLAM -->
+    <node name="gmapping" pkg="gmapping" type="slam_gmapping" >
+        <param name="base_frame" value="base_link" />
+        <param name="odom_frame" value="odom" />
+        <param name="map_frame" value="map" />
+        <param name="scan" value="scan" />        
+    </node>
+    
+  	<arg name="use_map_topic"   default="false"/>
+    <arg name="scan_topic"      default="scan"/> 
+    <arg name="initial_pose_x"  default="0.0"/>
+    <arg name="initial_pose_y"  default="0.0"/>
+    <arg name="initial_pose_a"  default="0.0"/>
+    <arg name="odom_frame_id"   default="odom"/>
+    <arg name="base_frame_id"   default="base_footprint"/>
+    <arg name="global_frame_id" default="map"/>
+
+    <node pkg="amcl" type="amcl" name="amcl">
+        <param name="use_map_topic"             value="$(arg use_map_topic)"/>
+        <!-- Publish scans from best pose at a max of 10 Hz -->
+        <param name="odom_model_type"           value="diff"/>
+        <param name="odom_alpha5"               value="0.1"/>
+        <param name="gui_publish_rate"          value="10.0"/>
+        <param name="laser_max_beams"             value="60"/>
+        <param name="laser_max_range"           value="12.0"/>
+        <param name="min_particles"             value="500"/>
+        <param name="max_particles"             value="2000"/>
+        <param name="kld_err"                   value="0.05"/>
+        <param name="kld_z"                     value="0.99"/>
+        <param name="odom_alpha1"               value="0.2"/>
+        <param name="odom_alpha2"               value="0.2"/>
+        <!-- translation std dev, m -->
+        <param name="odom_alpha3"               value="0.2"/>
+        <param name="odom_alpha4"               value="0.2"/>
+        <param name="laser_z_hit"               value="0.5"/>
+        <param name="laser_z_short"             value="0.05"/>
+        <param name="laser_z_max"               value="0.05"/>
+        <param name="laser_z_rand"              value="0.5"/>
+        <param name="laser_sigma_hit"           value="0.2"/>
+        <param name="laser_lambda_short"        value="0.1"/>
+        <param name="laser_model_type"          value="likelihood_field"/>
+        <!-- <param name="laser_model_type" value="beam"/> -->
+        <param name="laser_likelihood_max_dist" value="2.0"/>
+        <param name="update_min_d"              value="0.25"/>
+        <param name="update_min_a"              value="0.2"/>
+        <param name="odom_frame_id"             value="$(arg odom_frame_id)"/> 
+        <param name="base_frame_id"             value="$(arg base_frame_id)"/> 
+        <param name="global_frame_id"           value="$(arg global_frame_id)"/>
+        <param name="resample_interval"         value="1"/>
+        <!-- Increase tolerance because the computer can get quite busy -->
+        <param name="transform_tolerance"       value="1.0"/>
+        <param name="recovery_alpha_slow"       value="0.0"/>
+        <param name="recovery_alpha_fast"       value="0.0"/>
+        <param name="initial_pose_x"            value="$(arg initial_pose_x)"/>
+        <param name="initial_pose_y"            value="$(arg initial_pose_y)"/>
+        <param name="initial_pose_a"            value="$(arg initial_pose_a)"/>
+        
+        <remap from="scan"                      to="$(arg scan_topic)"/>
+    </node>
+	
+	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
+	<include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml"/>
+	
+	<!-- Move base -->
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find sigsent)/params/move_base.yaml" command="load" />
+		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
+	</node> 
+	
+	<!-- turns GPS fix message to a UTM for move_base -->
+	<node name="gpsTOutm" pkg="gps_common" type="utm_odometry_node" />
+	
+	<!-- turns GPS fix message to a Stamped Pose message for gps_goal -->
+	<node name="gpsTOpose" pkg="sigsent" type="fix_to_pose.py" />
+	
+	<!-- RVIZ -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sigsent)/rviz/sigsent.rviz"/>
+	
+
+	<!-- put nodes meant to run on the sigsent raspi computer here -->
+
+	<group>
+		<!-- info to run nodes on sigsent-->
+    	<machine name="sigsent" address="sigsent" env-loader="~/sigsent.bash" default="true" user="sigsent" timeout="10.0" />
+        
+        <!-- Turtlebot -->
+		<arg name="base"              default="$(env TURTLEBOT_BASE)"         doc="mobile base type [create, roomba]"/>
+		<arg name="stacks"            default="$(env TURTLEBOT_STACKS)"       doc="stack type displayed in visualisation/simulation [circles, hexagons]"/>
+		<arg name="serialport"        default="$(env TURTLEBOT_SERIAL_PORT)"  doc="used by create to configure the port it is connected on [/dev/ttyUSB0, /dev/ttyS0]"/>
+		<arg name="3d_sensor"         default="$(env TURTLEBOT_3D_SENSOR)"    doc="3d sensor types [kinect, asux_xtion_pro]"/>
+		
+		<!-- Turtlebot config files -->
+		<include file="$(find turtlebot_bringup)/launch/includes/robot.launch.xml">
+		    <arg name="base" value="$(arg base)" />
+		    <arg name="stacks" value="$(arg stacks)" />
+		    <arg name="3d_sensor" value="$(arg 3d_sensor)" />
+		</include>
+
+        <!-- Mobile Base for turtlebot -->
+		<include file="$(find turtlebot_bringup)/launch/includes/mobile_base.launch.xml">
+		    <arg name="base" value="$(arg base)" />
+		    <arg name="serialport" value="$(arg serialport)" />
+		</include>
+		
+		<!-- MPU-9250 -->
+		<node name="imu" pkg="i2c_imu" type="i2c_imu_node" respawn="true" output="screen">
+		    <remap from="data" to="imu" />
+		</node>
+
+		<!-- Sparkfun Venus638FLPx -->
+		<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" output="screen">
+		    <param name="port" type="string" value="/dev/ttyS0" />
+		    <param name="baud" type="int" value="9800" />
+		</node>
+	
+		<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+			<param name="video_device" value="/dev/video0" />
+			<param name="image_width" value="640" />
+			<param name="image_height" value="480" />
+			<param name="pixel_format" value="yuyv" />
+			<param name="camera_frame_id" value="usb_cam" />
+			<param name="io_method" value="mmap"/>
+		</node>
+    
+	    <!-- Hokuyo UTM-30lx LIDAR -->
+		<node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
+		    <param name="calibrate_time" type="bool" value="true"/>
+		    <param name="port" type="string" value="/dev/ttyACM0"/>
+		    <param name="intensity" type="bool" value="false"/>
+		    <param name="min_ang" value="-2.2689"/>
+		    <param name="max_ang" value="+2.2689"/>
+		    <param name="cluster" value="1"/>    
+		    <param name="frame_id" value="base_link"/>
+		</node>
+		
+		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET 
+        <node name="lightbar" pkg="sigsent" type="lightbar.py" respawn="false" />
+        -->
+
+    </group>
+
+</launch>
+
+
