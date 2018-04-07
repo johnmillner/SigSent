@@ -1,0 +1,5 @@
+i2c_path: /dev/i2c-1
+alwaysOn: true
+frequency: 10.0
+minFreq: 0.2
+maxFreq: 10.0

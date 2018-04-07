@@ -1,0 +1,20 @@
+  maxLinearVel: 0.70
+  maxAngularVel: 3.8
+  wheelSeparation: 0.34
+  wheelDiameter: 0.1735 # evarobot50
+  pwmFrequency: 1000.0
+  pwmDuty: 14
+  pwmCounts: 256
+  pwmMode: 1
+  timeout: 0.5
+
+  M1_IN1: 1
+  M1_IN2: 12
+  M1_EN: 5
+  
+  M2_IN1: 0
+  M2_IN2: 19
+  M2_EN: 6
+  
+  limitVoltage: 1.2
+  #The pin voltage is roughly 140 mV per amp of output current
