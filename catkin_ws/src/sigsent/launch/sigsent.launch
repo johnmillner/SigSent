@@ -6,11 +6,11 @@
 <launch>
     <!-- put nodes meant to run on the basestation computer here -->
 	
-	<!-- Joystick -->
+	<!-- Joystick 
 	<node respawn="false" pkg="joy" type="joy_node" name="joy" >
         <param name="dev" type="string" value="/dev/input/js0" />
         <param name="deadzone" value="0.05" />
-    </node>
+    </node>-->
 
 	<!-- GPS goal -->
     <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
@@ -94,7 +94,7 @@
 		    <param name="baud" type="int" value="9800" />
 		</node>
 	
-		<!-- Playstation Eye -->
+		<!-- Playstation Eye 
 		 <node pkg="hector_pseye_camera" type="pseye_camera_node" name="pseye_camera" output="screen">
 			<param name="camera_topic" value="ps_eye1/image_raw" />
 			<param name="camera_info_url" value="package://hector_pseye_camera/config/ps_eye.ini"/>
@@ -102,7 +102,7 @@
 			<param name="frame_name" value="camera_optical_frame"/>
 			<param name="use_every_n_th_image" value="1"/>
 			<param name="fps" value="60"/>
-		</node>
+		</node>-->
     
     	    <!-- Hokuyo UTM-30lx LIDAR -->
 		<node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
@@ -115,8 +115,9 @@
 		    <param name="frame_id" value="base_link"/>
 		</node>
 		
-		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
-        <node name="lightbar" pkg="sigsent" type="lightbar.py" />
+		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET 
+        <node name="lightbar" pkg="sigsent" type="lightbar.py" respawn="false" />
+        -->
 
     </group>
 
