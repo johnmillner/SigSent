@@ -8,6 +8,7 @@ import json
 import roslib
 import pigpio
 import qdarkstyle
+import math
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -27,7 +28,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 
 roslib.load_manifest('sigsent')
 
-from sigsent.msg import GPSList
+from sigsent.msg import GPSList, Battery
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -347,6 +348,7 @@ class Maps(QObject):
 
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
+        self.coords_label.setText('Latitude: {}, Longitude: {}'.format(*self.coords))        
 
 class Lightbar():
     def __init__(self):
@@ -374,6 +376,22 @@ class Lightbar():
 
         self.light_pub.publish(msg)
 
+class FuelGauge:
+    def __init__(self, battery_bar, voltage_label, current_label, temperature_label):
+        self.battery_bar = battery_bar
+        self.voltage_label = voltage_label
+        self.current_label = current_label
+        self.temperature_label = temperature_label
+
+        if ROS:
+            self.battery_sub = rospy.Subscriber('battery', Battery, self.battery_cb, queue_size=10)
+
+    def battery_cb(self, data):
+        self.battery_bar.setValue(int(math.ceil(data.percent_full * 100)))
+        self.voltage_label.setText('{}V'.format(data.voltage))
+        self.current_label.setText('{}A'.format(data.current))
+        self.temperature_label.setText('{}F'.format(data.temperature))
+        
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
@@ -399,6 +417,8 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.user_tools.insertWidget(2, self.lightbar.strobe_button)
 
         self.maps_layout.addWidget(self.maps.goals_table)
+
+        self.fg = FuelGauge(self.battery_bar, self.voltage_label, self.current_label, self.temperature_label)
 
 if __name__ == '__main__':
     if ROS:
