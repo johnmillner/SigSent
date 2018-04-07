@@ -1,3 +1,8 @@
+<!--    John Millner
+        Sigsent 
+        Group 11
+-->
+
 <launch>
     <!-- put nodes meant to run on the basestation computer here -->
 	
@@ -10,9 +15,8 @@
 	<!-- GPS goal -->
     <node name="gps_goal" pkg="gps_goal" type="gps_goal" />
     
-
     <!-- transform -->
-    <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 6 0 0 0 /base_link /laser 10" />
+    <node name="tf_laser" pkg="tf" type="static_transform_publisher" args="0 0 1 0 0 0 /base_link /laser 10" />
     
 	<!-- SLAM -->
     <node name="gmapping" pkg="gmapping" type="slam_gmapping" >
@@ -33,7 +37,6 @@
 		<param name="initial_pose_a" value="0.0"/>
 		<param name="recovery_alpha_slow" value="0" />
 		<param name="recovery_alpha_fast" value="0" />
-		
 	</node>
 	
 	<include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
@@ -42,6 +45,7 @@
 	<!-- Move base -->
 	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
 		<rosparam file="$(find sigsent)/params/move_base.yaml" command="load" />
+		<remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel" />
 	</node> 
 	
 	<!-- turns GPS fix message to a UTM for move_base -->
@@ -53,19 +57,12 @@
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sigsent)/rviz/sigsent.rviz"/>
 	
-	
-	
-	
-	<machine name="sigsent" address="192.168.1.101" env-loader="~/sigsent.bash" default="true" user="sigsent" timeout="10.0" />
+
 	<!-- put nodes meant to run on the sigsent raspi computer here -->
-	
-	
-	
-	
-	
+
 	<group>
 		<!-- info to run nodes on sigsent-->
-
+    	<machine name="sigsent" address="sigsent" env-loader="~/sigsent.bash" default="true" user="sigsent" timeout="10.0" />
         
         <!-- Turtlebot -->
 		<arg name="base"              default="$(env TURTLEBOT_BASE)"         doc="mobile base type [create, roomba]"/>
@@ -73,19 +70,23 @@
 		<arg name="serialport"        default="$(env TURTLEBOT_SERIAL_PORT)"  doc="used by create to configure the port it is connected on [/dev/ttyUSB0, /dev/ttyS0]"/>
 		<arg name="3d_sensor"         default="$(env TURTLEBOT_3D_SENSOR)"    doc="3d sensor types [kinect, asux_xtion_pro]"/>
 		
+		<!-- Turtlebot config files-->
 		<include file="$(find turtlebot_bringup)/launch/includes/robot.launch.xml">
 		    <arg name="base" value="$(arg base)" />
 		    <arg name="stacks" value="$(arg stacks)" />
 		    <arg name="3d_sensor" value="$(arg 3d_sensor)" />
 		</include>
 
+        <!-- Mobile Base for turtlebot -->
 		<include file="$(find turtlebot_bringup)/launch/includes/mobile_base.launch.xml">
 		    <arg name="base" value="$(arg base)" />
 		    <arg name="serialport" value="$(arg serialport)" />
 		</include>
 		
-		<!-- Sparkfun Razor IMU 9DoF 14001 -->
-		<node name="imu" pkg="razor_imu_9dof_14001" type="razor.py" respawn="true" output="screen"/>
+		<!-- MPU-9250 -->
+		<node name="imu" pkg="i2c_imu" type="i2c_imu_node" respawn="true" output="screen">
+		    <remap from="data" to="imu" />
+		<node/>
 
 		<!-- Sparkfun Venus638FLPx -->
 		<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" output="screen">
@@ -114,7 +115,8 @@
 		    <param name="frame_id" value="base_link"/>
 		</node>
 		
-		<node name="lightbar" pkg="sigsent" type="lightbar.py" />
+		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
+        <node name="lightbar" pkg="sigsent" type="lightbar.py" />
 
     </group>
     
