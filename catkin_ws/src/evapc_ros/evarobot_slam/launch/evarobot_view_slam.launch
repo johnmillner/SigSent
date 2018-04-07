@@ -1,0 +1,21 @@
+
+<launch>
+
+	<!-- Run sync -->
+  <include file="$(find evapc_start)/launch/sync.launch" />
+
+  <!-- Run state publisher -->
+  <include file="$(find evarobot_state_publisher)/launch/robot_state.launch" />
+
+
+  <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+  <include file="$(find rplidar_ros)/launch/hectormapping.launch">
+    <arg name="depth_frame_id" value="sensor/kinect_link"/>
+  </include>
+  
+  <!-- Run rviz -->
+  <include file="$(find evarobot_viz)/launch/view_evarobot.launch" />
+
+
+</launch>
+

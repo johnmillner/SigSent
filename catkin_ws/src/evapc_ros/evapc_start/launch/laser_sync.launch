@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="robot_ns" default="/" />
+
+	<!-- Run sync -->
+  <include file="$(find evapc_start)/launch/sync.launch" />
+	
+	<!-- Run laser -->
+	<include file="$(find evapc_start)/launch/laser.launch"/>
+</launch>

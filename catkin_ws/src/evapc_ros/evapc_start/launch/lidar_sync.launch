@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="robot_ns" default="/" />
+
+	<!-- Run sync -->
+  <include file="$(find evapc_start)/launch/sync.launch" />
+
+	<group ns="$(arg robot_ns)">
+		<!-- Run Lidar sensor -->
+		<include file="$(find evapc_start)/launch/lidar.launch">
+			<arg name="robot_ns" value="$(arg robot_ns)" />
+		</include>
+ </group>
+</launch>
