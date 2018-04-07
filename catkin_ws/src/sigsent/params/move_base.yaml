@@ -5,7 +5,7 @@
 ###MOVE BASE PARAMS                     ###
 ###########################################
 #global planner 
-base_global_planner: "global_planner/GlobalPlanner"
+base_global_planner: "navfn/NavfnROS"
 
 # local planner 
 base_local_planner: "dwa_local_planner/DWAPlannerROS"
@@ -15,6 +15,7 @@ recovery_behaviors:
     - {name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
     - {name: rotate_recovery, type: rotate_recovery/RotateRecovery}
     - {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+    
 recovery_behavior_enabled: true
 
 #controller settings
@@ -35,28 +36,21 @@ clearing_rotation_allowed: true
 shutdown_costmaps: false
 max_planning_retries: -1
 
+max_obstacle_height: 0.60  # assume something like an arm is mounted on top of the robot
 
 ###########################################
-###GLOBAL_PLANNER PARAMS                ###
+###NavfnROS PARAMS                ###
 ###########################################
 
-BaseGlobalPlanner:
-    allow_unknown: true         
+NavfnROS:
+    allow_unknown: true      
+    
+    planner_window_x: 100.0
+    planner_window_y: 100.0   
 
     default_tolerance: 0.5 
     
-    visualize_potential: true      
-
-    #use A*
-    use_dijkstra: false
-    #use more accurate approximation potential
-    use_quadratic: true
-    #use gradient descent
-    
-    use_grid_path: false
-    
-    #NavFN is trash
-    old_navfn_behavior: false
+    visualize_potential: false      
                                
 
 ###########################################
@@ -74,34 +68,34 @@ DWAPlannerROS:
 
 
     max_vel_x: 0.5  # 0.55
-    min_vel_x: 0.0 
+    min_vel_x: -0.3
 
     max_vel_y: 0.0  # diff drive robot
     min_vel_y: 0.0  # diff drive robot
 
     max_rot_vel: 5.0  # choose slightly less than the base's capability
-    min_rot_vel: 0.4  # this is the min angular velocity when there is negligible translational velocity
+    min_rot_vel: -5.0  # this is the min angular velocity when there is negligible translational velocity
 
     # Goal Tolerance Parameters
-    yaw_goal_tolerance: 0.3  # 0.05
-    xy_goal_tolerance: 0.15  # 0.10
+    yaw_goal_tolerance: 0.05  # 0.05
+    xy_goal_tolerance: 0.10  # 0.10
     latch_xy_goal_tolerance: false
 
     # Forward Simulation Parameters
-    sim_time: 1.0       # 1.7
+    sim_time: 1.7       # 1.7
     sim_granularity: 0.025
 
     vx_samples: 6       # 3
     vy_samples: 1       # diff drive robot, there is only one sample
-    vth_samples: 20  # 20
+    vth_samples: 30  # 20
 
     controller_frequency: 20.0
 
     # Trajectory Scoring Parameters
-    path_distance_bias: 64.0      # 32.0   - weighting for how much it should stick to the global path plan
+    path_distance_bias: 32.0      # 32.0   - weighting for how much it should stick to the global path plan
     goal_distance_bias: 24.0      # 24.0   - wighting for how much it should attempt to reach its goal
-    occdist_scale: 0.5            # 0.01   - weighting for how much the controller should avoid obstacles
-    forward_point_distance: 0.325 # 0.325  - how far along to place an additional scoring point
+    occdist_scale: 0.1            # 0.01   - weighting for how much the controller should avoid obstacles
+    forward_point_distance: 0.35 # 0.325  - how far along to place an additional scoring point
     stop_time_buffer: 0.2         # 0.2    - amount of time a robot must stop in before colliding for a valid traj.
     scaling_speed: 0.25           # 0.25   - absolute velocity at which to start scaling the robot's footprint
     max_scaling_factor: 0.2       # 0.2    - how much to scale the robot's footprint when at speed.
@@ -114,76 +108,50 @@ DWAPlannerROS:
 
 
 ###########################################
-###COMMON COSTMAP PARAMS                ###
-###########################################
-
-static_layer:
-    unkown_cost_value: 1
-    lethal_cost_threshold: 100
-    map_topic: "map"
-    first_map_only: false
-    subscribe_to_updates: true
-    track_unkown_space: true
-    use_maximum: false
-    trinary_costmap: false
-
-obstacle_layer: 
-    observation_sources: "scan"
-    scan: 
-        topic: "scan"
-        sensor_frame: ""
-        observation_persistence: 0.0
-        expected_update_rate: 1.0
-        data_type: "LaserScan"
-        clearing: true
-        marking: true
-        max_obstacle_height: 0.35
-        min_obstacle_height: 0.25
-        obstacle_range: 20.0
-        raytrace_range: 3.0
-        inf_is_valud: false
-
-    track_unknown_space: true
-    footprint_clearing_enabled: true
-
-inflation_layer:
-    inflation_radius: 0.5
-    cost_scaling_factor: 5.0
-
-social_proxemic:
-    enabled: true
-    cutoff: 10.0
-    amplitude: 77.0
-    covariance: 0.025
-    factor: 5.0
-    keep_time: 0.75
-
-social_passing:
-    enabled: true
-    cutoff: 10.0
-    amplitude: 77.0
-    covariance: 0.025
-    factor: 5.0
-    keep_time: 0.75
-
-
-###########################################
 ###GLOBAL COSTMAP PARAMS                ###
 ###########################################
 global_costmap:
 
     plugins:
-    - {name: static_layer, type: "costmap_2d::StaticLayer"}
-    - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
-    - {name: inflation, type: "costmap_2d::InflationLayer"}
+    - {name: obstacles, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
-    global_frame: "/map"
+    robot_radius: 0.2
+    global_frame: "/odom"
     robot_base_frame: "base_footprint"
     transform_tolerance: 0.5
-    update_frequency: 1.0
-    publish_frequency: 1.0
-    rolling_window: false
+    update_frequency: 0.25
+    publish_frequency: 0.5
+    rolling_window: true
     always_send_full_costmap: false
+    
+    width: 50.0
+    height: 50.0
+    resolution: 0.05
+    origin_x: 0.0
+    origin_y: 0.0
+
+    obstacles: 
+        observation_sources: "scan"
+        scan: 
+            topic: "scan"
+            observation_persistence: 0.0
+            expected_update_rate: 1.0
+            data_type: "LaserScan"
+            clearing: true
+            marking: true
+            max_obstacle_height: 10.0
+            min_obstacle_height: -10.0
+            obstacle_range: 20.0
+            raytrace_range: 3.0
+            inf_is_valud: false
+
+        track_unknown_space: true
+        footprint_clearing_enabled: true
+
+    inflation_layer:
+        inflation_radius: 0.3
+        cost_scaling_factor: 5.0  
 
 
 
@@ -194,16 +162,18 @@ global_costmap:
 local_costmap:
 
     plugins:
-    - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
-    - {name: inflation, type: "costmap_2d::InflationLayer"}
+    - {name: obstacles, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
     - {name: social_proxemic, type: "social_navigation_layers::ProxemicLayer"}
     - {name: social_passing, type: "social_navigation_layers::PassingLayer"}
 
+    robot_radius: 0.2
+    
     global_frame: "/odom"
     robot_base_frame: "base_footprint"
     transform_tolerance: 0.5
-    update_frequency: 5.0
-    publish_frequency: 2.5
+    update_frequency: 0.1
+    publish_frequency: 0.2
     rolling_window: true
     always_send_full_costmap: false
 
@@ -213,4 +183,42 @@ local_costmap:
     origin_x: 0.0
     origin_y: 0.0
 
+
+    obstacles: 
+        observation_sources: "scan"
+        scan: 
+            topic: "scan"
+            observation_persistence: 0.0
+            expected_update_rate: 1.0
+            data_type: "LaserScan"
+            clearing: true
+            marking: true
+            max_obstacle_height: 10.0
+            min_obstacle_height: -10.0
+            obstacle_range: 20.0
+            raytrace_range: 3.0
+            inf_is_valud: false
+
+        track_unknown_space: true
+        footprint_clearing_enabled: true
+
+    inflation_layer:
+        inflation_radius: 0.3
+        cost_scaling_factor: 5.0
+
+    social_proxemic:
+        enabled: true
+        cutoff: 10.0
+        amplitude: 77.0
+        covariance: 0.025
+        factor: 5.0
+        keep_time: 0.75
+
+    social_passing:
+        enabled: true
+        cutoff: 10.0
+        amplitude: 77.0
+        covariance: 0.025
+        factor: 5.0
+        keep_time: 0.75
 
