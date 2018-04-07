@@ -16,11 +16,18 @@ class DataCollector:
         self.imu_sub = rospy.Subscriber('/mobile_base/sensors/imu_data', Imu, self.imu_cb, queue_size=10)
         self.imu_data = None
         
+        self.lock = False
+
     def imu_cb(self, data):
         self.imu_data = (data.angular_velocity.x, data.angular_velocity.y, data.angular_velocity.z, 
                          data.linear_acceleration.x, data.linear_acceleration.y, data.linear_acceleration.z)
 
     def data_collection(self, msg):
+        if self.lock:
+            return
+        
+        self.lock = True
+
         # Mode: 0 = smooth wheels, 1 = rough wheels, 2 = smooth walking, 3 = rough walking
         mode = msg.data
 
@@ -28,6 +35,12 @@ class DataCollector:
         while rospy.Time.now() < end_time:
             self.data[self.imu_data] = mode
             self.collection_rate.sleep()
+
+        with open(filename, 'w') as imu_fp:
+            json.dump(dc.data, imu_fp)
+
+
+        self.lock = False
 
 if __name__ == '__main__':
     dc = None

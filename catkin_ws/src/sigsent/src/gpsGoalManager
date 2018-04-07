@@ -5,22 +5,24 @@ from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatus
 
+roslib.load_manifest('sigsent')
+from sigsent.msg import GPSList
     
 def checker(data):
     rospy.loginfo("gpsGoalManager: checking satillite connection")
     
     #check for satilite connection, if none, wait one second and check again
     while data.status < 0:
-        rospy.logingo("gpsGoalManager: waiting for valid GPS fix")
+        rospy.loginfo("gpsGoalManager: waiting for valid GPS fix")
         rate.sleep()
         
-    rospy.logingo("gpsGoalManager: Valid GPS fix found, setting up gpsGoal node")
+    rospy.loginfo("gpsGoalManager: Valid GPS fix found, setting up gpsGoal node")
     
     #with valid satillite connection, set local_xy_origin
     #set up publisher
     localXYorigin = rospy.Publisher('local_xy_origin', PoseStamped, queue_size=10)
     
-    msg = new PoseStamped()
+    msg = PoseStamped()
     msg.header = data.header
     
     msg.pose.position.x = data.latitude
@@ -51,14 +53,14 @@ def init():
 #updates the list of gps points
 def newMessage( data ):
     rospy.loginfo("gpsGoalManager: updated list of GPS goals!")
-    gpsList = data.gpsList
+    gpsList = data.goals
     
 def move_baseStatus( data ):
     rospy.loginfo("gpsGoalManager: move_base has updated its status!")
     status = data
             
 def operation():
-    rospy.Subscriber("gpsGoals", gpsGoals, newMessage() )
+    rospy.Subscriber('gps_goals_list', GPSList, newMessage)
     rospy.Subscriber("move_base/status", move_base/status, move_baseStatus() )
     gpsGoal = rospy.Publisher('gps_goal', NavSatFix, queue_size=10)
     confirmedGoal = rospy.Publisher('confirmed_goal', NavSatFix, queue_size=10)
@@ -73,20 +75,20 @@ def operation():
             gpsGoal.publish( gpsPoint )
             
             #wait for goal to be accepted by move_base
-            while status = 0:
+            while status == 0:
                 rate.sleep()
                 
             #ensure that the goal was successfully accepted - if not, move to next goal
-            if status not 1 or status not 3:
+            if status != 1 or status != 3:
                 rospy.logwarn("gpsGoalManager: there was an issue with move_base")
                 continue
             
             #wait for robot to travel to goal    
-            while status = 1
+            while status == 1:
                 rate.sleep
                 
             #if goal not reached, shrug - gotta chug on?
-            if status not 3
+            if status != 3:
                 rospy.logwarn("gpsGoalManager: there was an issue with move_base")
                 continue        
             
@@ -105,7 +107,7 @@ def operation():
 if __name__ == '__main__':
     try:
         rate = rospy.Rate(1)
-        gpsList = new list()
+        gpsList = list()
         status = 9
     
         init()
