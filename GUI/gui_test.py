@@ -35,7 +35,7 @@ from sigsent.msg import GPSList, Battery
 # https://stackoverflow.com/questions/47252632/how-to-pass-info-from-js-to-python-using-qwebchannel
 # https://github.com/eyllanesc/stackoverflow/tree/master/47252632
 
-ROS = False
+ROS = True
 
 class RecordVideo(QtCore.QObject):
     image_data = QtCore.pyqtSignal(object)
@@ -348,6 +348,7 @@ class Maps(QObject):
 
     def gps_callback(self, data):
         self.coords = (data.latitude, data.longitude)
+        self.coords_label.setText('Latitude: {}, Longitude: {}'.format(*self.coords))        
 
 class Lightbar():
     def __init__(self):
@@ -375,7 +376,7 @@ class Lightbar():
 
         self.light_pub.publish(msg)
 
-class Battery:
+class FuelGauge:
     def __init__(self, battery_bar, voltage_label, current_label, temperature_label):
         self.battery_bar = battery_bar
         self.voltage_label = voltage_label
@@ -417,7 +418,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
 
         self.maps_layout.addWidget(self.maps.goals_table)
 
-        self.battery = Battery(self.battery_bar, self.voltage_label, self.current_label, self.temperature_label)
+        self.fg = FuelGauge(self.battery_bar, self.voltage_label, self.current_label, self.temperature_label)
 
 if __name__ == '__main__':
     if ROS:

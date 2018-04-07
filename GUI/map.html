@@ -129,9 +129,11 @@ var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
         if (markers.length > 0)
         {
             marker = markers[0];
-
-            position.lat = marker.getPosition().lat();
-            position.lng = marker.getPosition().lng();
+            position = {'lat': marker.getPosition().lat(), 'lng': marker.getPosition().lng()};
+        }
+        else
+        {
+            return null;
         }
         
         return position;
@@ -172,6 +174,13 @@ var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
     }
  function addMarker(lat, lng) {
   var myLatLng = new google.maps.LatLng(lat, lng);
+
+        if (markers.length > 0)
+        {
+            markers[0].position = new google.maps.LatLng(lat, lng);
+            return;
+        }
+
       var marker = new google.maps.Marker({position: myLatLng,
                         map: map,
                         icon: positionImage
@@ -181,7 +190,7 @@ var goalImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
         }
         markers = [];            
         markers.push(marker);
-        markers.splice(0, 1);
+        //markers.splice(0, 1);
 
  }
 
