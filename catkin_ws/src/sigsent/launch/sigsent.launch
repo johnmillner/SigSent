@@ -133,15 +133,14 @@
 		    <param name="baud" type="int" value="9800" />
 		</node>
 	
-		<!-- Playstation Eye 
-		 <node pkg="hector_pseye_camera" type="pseye_camera_node" name="pseye_camera" output="screen">
-			<param name="camera_topic" value="ps_eye1/image_raw" />
-			<param name="camera_info_url" value="package://hector_pseye_camera/config/ps_eye.ini"/>
-			<param name="dev" value="/dev/video0"/>
-			<param name="frame_name" value="camera_optical_frame"/>
-			<param name="use_every_n_th_image" value="1"/>
-			<param name="fps" value="60"/>
-		</node>-->
+		<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+			<param name="video_device" value="/dev/video0" />
+			<param name="image_width" value="640" />
+			<param name="image_height" value="480" />
+			<param name="pixel_format" value="yuyv" />
+			<param name="camera_frame_id" value="usb_cam" />
+			<param name="io_method" value="mmap"/>
+		</node>
     
 	    <!-- Hokuyo UTM-30lx LIDAR -->
 		<node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
