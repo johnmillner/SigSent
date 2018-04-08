@@ -5,7 +5,7 @@
 
 <launch>
     <!-- put nodes meant to run on the basestation computer here -->
-	
+
 	<!-- Joystick 
 	<node respawn="false" pkg="joy" type="joy_node" name="joy" >
         <param name="dev" type="string" value="/dev/input/js0" />
@@ -95,7 +95,15 @@
 	
 	<!-- RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sigsent)/rviz/sigsent.rviz"/>
-	
+
+    <!-- Audio -->
+    <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+        <remap from="audio" to="basestation_audio"/>
+    </node>
+
+    <node name="audio_play" pkg="audio_play" type="audio_play" output="screen">
+        <remap from="audio" to="sigsent_audio"/>
+    </node>
 
 	<!-- put nodes meant to run on the sigsent raspi computer here -->
 
@@ -157,6 +165,14 @@
         <node name="lightbar" pkg="sigsent" type="lightbar.py" respawn="false" />
         -->
 
+        <!-- Audio -->
+        <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+            <remap from="audio" to="sigsent_audio"/>
+        </node>
+
+        <node name="audio_play" pkg="audio_play" type="audio_play" output="screen">
+            <remap from="audio" to="basestation_audio"/>
+        </node>
     </group>
 
 </launch>
