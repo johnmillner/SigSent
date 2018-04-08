@@ -1,0 +1,10 @@
+# Define the pins that are inputs or outputs.
+directions:
+-   11: out
+
+# Define default pin states.
+states:
+-   11: 0
+
+shutdown_states:
+-   11: 0

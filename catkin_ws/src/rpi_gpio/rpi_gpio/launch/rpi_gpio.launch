@@ -1,0 +1,6 @@
+<!-- http://wiki.ros.org/roslaunch/XML/node -->
+<launch>
+   <node name="rpi_gpio" pkg="rpi_gpio" type="rpi_gpio_node.py" output="screen">
+      <rosparam file="$(find rpi_gpio)/config/example.yaml" command="load" />
+   </node>
+</launch>

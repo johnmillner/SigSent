@@ -161,18 +161,15 @@
 		    <param name="frame_id" value="base_link"/>
 		</node>
 		
-		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET 
-        <node name="lightbar" pkg="sigsent" type="lightbar.py" respawn="false" />
-        -->
-
+		<node name="rpi_gpio" pkg="rpi_gpio" type="rpi_gpio_node.py" output="screen">
+            
+        </node>
+        
         <!-- Audio -->
         <node name="sigsent_audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
             <remap from="audio" to="sigsent_audio"/>
         </node>
 
-        <node name="sigsent_audio_play" pkg="audio_play" type="audio_play" output="screen">
-            <remap from="audio" to="basestation_audio"/>
-        </node>
     </group>
 
 </launch>
