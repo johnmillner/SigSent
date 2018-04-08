@@ -1,4 +1,0 @@
-#pip-wiringpi2:
-# ubuntu:
-#  pip:
-#    packages: ['wiringpi2==2.32.3']

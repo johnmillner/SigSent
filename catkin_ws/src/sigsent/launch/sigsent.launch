@@ -169,6 +169,9 @@
             <remap from="audio" to="sigsent_audio"/>
         </node>
 
+        <node name="sigsent_audio_play" pkg="audio_play" type="audio_play" output="screen">
+            <remap from="audio" to="basestation_audio"/>
+        </node>
     </group>
 
 </launch>
