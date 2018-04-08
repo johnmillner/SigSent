@@ -97,11 +97,11 @@
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sigsent)/rviz/sigsent.rviz"/>
 
     <!-- Audio -->
-    <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+    <node name="basestation_audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
         <remap from="audio" to="basestation_audio"/>
     </node>
 
-    <node name="audio_play" pkg="audio_play" type="audio_play" output="screen">
+    <node name="basestation_audio_play" pkg="audio_play" type="audio_play" output="screen">
         <remap from="audio" to="sigsent_audio"/>
     </node>
 
@@ -166,11 +166,11 @@
         -->
 
         <!-- Audio -->
-        <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+        <node name="sigsent_audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
             <remap from="audio" to="sigsent_audio"/>
         </node>
 
-        <node name="audio_play" pkg="audio_play" type="audio_play" output="screen">
+        <node name="sigsent_audio_play" pkg="audio_play" type="audio_play" output="screen">
             <remap from="audio" to="basestation_audio"/>
         </node>
     </group>
