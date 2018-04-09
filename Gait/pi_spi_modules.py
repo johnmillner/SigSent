@@ -46,7 +46,7 @@ class Message:
             message |= self.fwd
         elif left:
             message |= self.left
-         elif right:
+        elif right:
             message |= self.right
         messages.append(message)
 
