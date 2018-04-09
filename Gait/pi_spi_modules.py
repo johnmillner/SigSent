@@ -80,5 +80,5 @@ class Message:
 
         messages.append(self.create_direction_message(fwd=fwd, left=left, right=right, back=back))
         messages.append(speed)
-
+        
         return messages

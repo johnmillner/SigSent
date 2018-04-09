@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
     for test in tests:
         print('Sending test: {}'.format(test))
-
-        pi.spi_xfer(spi, test)
+        for msg in test:
+            pi.spi_xfer(spi, [msg])
+            sleep(0.1)
         sleep(1)
