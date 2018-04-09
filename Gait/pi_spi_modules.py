@@ -55,7 +55,7 @@ class Message:
     def create_mode_change_message(self, driving=False, walking=False):
         messages = []
         messages.append(self._create_header(mode_change=True))
-
+	message = 0b00000000
         if driving:
             message |= self.driving_mode
         elif walking:

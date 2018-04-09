@@ -13,12 +13,10 @@ Change mode: Button in GUI, publishes message
 TeleOp/Move base: publishes to topics. Listen to them and send the appropriate SPI
 """
 if __name__ == '__main__':
-
-=======
-
-Change mode: Button in GUI, publishes message
-TeleOp/Move base: publishes to topics. Listen to them and send the appropriate SPI
-"""
+	"""
+	Change mode: Button in GUI, publishes message
+	TeleOp/Move base: publishes to topics. Listen to them and send the appropriate SPI
+	"""
 if __name__ == '__main__':
     pi = pigpio.pi()
     spi = pi.spi_open(0, 115200)
