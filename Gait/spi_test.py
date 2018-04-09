@@ -1,86 +1,35 @@
+from __future__ import print_function
+
 import pigpio
-from ga import *
+from pi_spi_modules import Message
+from time import sleep
 
-mcu = MCU()
-# Left, 0 degrees at the top
-# right, 0 degrees at the bottom
-
-# front right is 0
-# front left is 1
-# middle right is 2
-# middle left is 3
-# back right is 4
-# back left is 5
-step1 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(100),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
 """
-step2 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
+main to test the message sending. These should be called from a ROS py file
+that needs to...
 
-step3 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
-
-step4 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
-
-step5 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
-
-step6 = Step(
-    legs=[
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()]),
-        Leg(states=[mcu.degrees_to_servo(),mcu.degrees_to_servo(),mcu.degrees_to_servo()])
-    ]
-)
-
-
-gait = Gait(steps=[step1, step2, step3, step4, step5, step6])
+Change mode: Button in GUI, publishes message
+TeleOp/Move base: publishes to topics. Listen to them and send the appropriate SPI
 """
+if __name__ == '__main__':
 
-gait = Gait(steps=[step1])
+    pi = pigpio.pi()
+    spi = pi.spi_open(0, 115200)
+    tests = []
+    test_message = Message()
+    
+    tests.append(test_message.create_walking_message(fwd=True))
+    tests.append(test_message.create_walking_message(left=True))
+    tests.append(test_message.create_walking_message(right=True))
 
-mcu.send_gait_mcu(gait)
+    tests.append(test_message.create_esc_message(left=True, speed=10))
+    tests.append(test_message.create_esc_message(right=True, speed=127))
+
+    tests.append(test_message.create_mode_change_message(driving=True))
+    tests.append(test_message.create_mode_change_message(walking=True))
+
+    for test in tests:
+        print('Sending test: {}'.format(test))
+
+        pi.spi_xfer(spi, test)
+        sleep(1)
