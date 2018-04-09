@@ -9,7 +9,7 @@ class Lightbar:
         self.blind_sub = rospy.Subscriber('blind', Int8, self.callback)
 
         # BCM17
-        self.light_pin = 11 
+        self.light_pin = 17
 
         self.pi = pigpio.pi()
         self.pi.set_mode(self.light_pin, pigpio.OUTPUT)
