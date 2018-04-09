@@ -34,3 +34,4 @@ if __name__ == '__main__':
             pi.spi_xfer(spi, [msg])
             
         sleep(1)
+    pi.spi_close(spi)
