@@ -32,3 +32,5 @@ if __name__ == '__main__':
         print('Sending test: {}'.format(test))
         for msg in test:
             pi.spi_xfer(spi, [msg])
+            
+        sleep(1)
