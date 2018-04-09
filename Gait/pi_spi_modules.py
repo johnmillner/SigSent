@@ -40,22 +40,14 @@ class Message:
     def create_walking_message(self, fwd=False, left=False, right=False):
         messages = []
         messages.append(self._create_header(walking_move=True))
-
-        message = 0b00000000
-        if fwd:
-            message |= self.fwd
-        elif left:
-            message |= self.left
-        elif right:
-            message |= self.right
-        messages.append(message)
+        messages.append(self.create_direction_message(fwd=fwd, left=left, right=right))
 
         return messages
     
     def create_mode_change_message(self, driving=False, walking=False):
         messages = []
         messages.append(self._create_header(mode_change=True))
-	message = 0b00000000
+        message = 0b00000000
         if driving:
             message |= self.driving_mode
         elif walking:
@@ -63,6 +55,19 @@ class Message:
         messages.append(message)
 
         return messages
+
+    def create_direction_message(self, fwd=False, left=False, right=False, back=False):
+        message = 0b00000000
+        if fwd:
+            message |= self.fwd
+        elif left:
+            message |= self.left
+        elif right:
+            message |= self.right
+        elif back:
+            message |= self.back
+        
+        return message
 
     def create_esc_message(self, fwd=False, left=False, right=False, back=False, speed=0):
         messages = []
@@ -73,6 +78,7 @@ class Message:
         if speed.bit_length() > 8:
             return None
 
+        messages.append(self.create_direction_message(fwd=fwd, left=left, right=right, back=back))
         messages.append(speed)
 
         return messages
