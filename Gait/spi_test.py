@@ -14,7 +14,7 @@ TeleOp/Move base: publishes to topics. Listen to them and send the appropriate S
 if __name__ == '__main__':
 
     pi = pigpio.pi()
-    spi = pi.spi_open(0, 57600)
+    spi = pi.spi_open(0, 115200)
     tests = []
     test_message = Message()
     
@@ -30,8 +30,7 @@ if __name__ == '__main__':
 
     for test in tests:
         print('Sending test: {}'.format(test))
-        for msg in test:
-            pi.spi_xfer(spi, [msg])
-            
-        sleep(1)
+        pi.spi_xfer(spi, test)
+        #sleep(0.01)
+ 
     pi.spi_close(spi)
