@@ -392,6 +392,30 @@ class FuelGauge:
         self.current_label.setText('{}A'.format(data.current))
         self.temperature_label.setText('{}F'.format(data.temperature))
         
+class MovementMode:
+    def __init__(self, label, button):
+        self.label = label
+        self.button = button
+        self.mode_pub = rospy.Publisher('mode', Int8, queue_size=10)
+
+        # 0 is driving, 1 is walking
+        self.current_mode = 0
+
+        self.button.clicked.connect(self.change_mode)
+
+    def change_mode(self):
+        self.current_mode ^= 1
+
+        msg = Int8()
+        msg.data = self.current_mode
+
+        self.mode_pub.publish(msg)
+
+        if self.current_mode == 0:
+            self.label.setText('Driving mode')
+        elif self.current_mode == 1:
+            self.label.setText('Walking mode')
+
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
@@ -419,6 +443,9 @@ class Basestation(QMainWindow, Ui_MainWindow):
         self.maps_layout.addWidget(self.maps.goals_table)
 
         self.fg = FuelGauge(self.battery_bar, self.voltage_label, self.current_label, self.temperature_label)
+
+        self.mode_changer = MovementMode(self.current_mode_label, self.switch_mode_button)
+
 
 if __name__ == '__main__':
     if ROS:
