@@ -121,11 +121,11 @@ class Spi:
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
         
     def walk_cb(self, data):
-        if data.direction < 0 or data.direction > 3:
+        if data.data < 0 or data.data > 3:
             return
 
         directions = list(self.direction_list)
-        directions[data.direction] = True
+        directions[data.data] = True
 
         self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2]))
 
