@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
     FILES
     GPSList.msg
     Battery.msg
+    ESC.msg
   )
 
 ## Generate services in the 'srv' folder

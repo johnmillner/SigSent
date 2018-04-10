@@ -104,6 +104,7 @@ class Spi:
 
         # Subscribers and their SPI callbacks here
         self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb)
+        self.walking_sub = rospy.Subscriber('walk', Int8, self.walk_cb)
         
     def mode_cb(self, data):
         if data.data == 0:
@@ -111,6 +112,14 @@ class Spi:
         elif data.data == 1:
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
         
+    def walk_cb(self, data):
+        if data.data == 0:
+            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=True))
+        if data.data == 1:
+            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(left=True))
+        if data.data == 2:
+            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(right=True))
+
 if __name__ == '__main__':
     try:
         spi = Spi()
