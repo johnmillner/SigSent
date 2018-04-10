@@ -98,22 +98,19 @@ class Spi:
         self.pi = pigpio.pi()
         self.spi_bus = 1
         self.spi_baud = 115200
+        self.spi = self.pi.spi_open(self.spi_bus, self.spi_baud)
 
-        # Subscribers here
-        self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb)
-        
         self.message_gen = Message()
 
-    def mode_cb(self, data):
-        spi = self.pi.spi_open(self.spi_bus, self.spi_baud)
-
-        if data.data == 0:
-            self.pi.spi_xfer(spi, self.message_gen.create_mode_change_message(driving=True))
-        elif data.data == 1:
-            self.pi.spi_xfer(spi, self.message_gen.create_mode_change_message(walking=True))
+        # Subscribers and their SPI callbacks here
+        self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb)
         
-        self.pi.spi_close(spi)
-
+    def mode_cb(self, data):
+        if data.data == 0:
+            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
+        elif data.data == 1:
+            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
+        
 if __name__ == '__main__':
     try:
         spi = Spi()
