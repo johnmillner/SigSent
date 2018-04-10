@@ -3,7 +3,7 @@ import time
 import sys
 import rospy
 import roslib
-from sigsent.msg import GPSList, Battery
+from sigsent.msg import GPSList, Battery, Drive
 
 roslib.load_manifest('sigsent')
 
@@ -48,7 +48,8 @@ class FuelGauge:
             bus.write_i2c_block_data(self.address, self.voltage_th_hi, self.)
 
         self.battery_pub = rospy.Publisher('battery', Battery, queue_size=10)
-        
+        self.motor_pub = rospy.Publisher('drive', Drive, queue_size=10)
+
         # Read fuel gauge at 10Hz
         self.read_freq = rospy.Rate(10)
         self.update()
@@ -83,6 +84,13 @@ class FuelGauge:
         battery.current = current
         battery.temperature = temperature
         battery.percent_full = accum_charge/self.max_cap
+
+        # Turn off the motors if current too high
+        if current > self.current_th_hi:
+            d_msg = Drive()
+            d_msg.direction.data = 0
+            d_msg.speed.data = 0
+            self.motor_pub.publish(d_msg)
 
         self.battery_pub.publish(battery)
 
