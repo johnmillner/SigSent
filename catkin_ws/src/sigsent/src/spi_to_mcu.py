@@ -112,7 +112,7 @@ class Spi:
         self.walking_sub = rospy.Subscriber('walk', Int8, self.walk_cb)
         self.drive_sub = rospy.Subscriber('drive', Drive, self.drive_cb)
 
-        self.direction_list = [True] * 4
+        self.direction_list = [False] * 4
 
     def mode_cb(self, data):
         if data.data == 0:
