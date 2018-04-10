@@ -107,12 +107,12 @@ ISR (SPI_STC_vect)
 {
     // grab byte from SPI Data Register
     byte data = SPDR;
-    Serial.print("Received: ");
+    //Serial.print("Received: ");
     Serial.println(data);
 
     if (receiving_header)
     {
-        Serial.println("Receiving header");
+        //Serial.println("Receiving header");
         MessageType message_type = get_message_type(data);
         
         if (message_type == MESSAGE_ERROR)
@@ -130,7 +130,6 @@ ISR (SPI_STC_vect)
 
     else if (receiving_mode)
     {
-        Serial.println("Receiving mode");
         ModeValue mode = get_mode(data);
 
         if (mode == MODE_ERROR)
@@ -156,7 +155,7 @@ ISR (SPI_STC_vect)
 
     else if (receiving_walking_move || receiving_esc_direction)
     {
-        Serial.println("Receiving direction");
+        //Serial.println("Receiving direction");
         Direction dir = get_direction(data);
 
         if (dir == DIR_ERROR)
@@ -192,7 +191,7 @@ ISR (SPI_STC_vect)
 
     else if (receiving_esc_speed)
     {
-        Serial.println("Receiving speed");
+        //Serial.println("Receiving speed");
         // speed is just a plain old 8 bit number, no processing needed, just do it
         byte ret = drive_escs(esc_dir);
 
@@ -203,6 +202,7 @@ ISR (SPI_STC_vect)
 
         receiving_header = 1;
         receiving_esc_speed = 0;
+        esc_dir = DIR_ERROR;
     }
 
 }
