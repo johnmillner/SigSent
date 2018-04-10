@@ -118,6 +118,24 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="mode_layout">
+         <item>
+          <widget class="QLabel" name="current_mode_label">
+           <property name="text">
+            <string>Driving Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="switch_mode_button">
+           <property name="text">
+            <string>Switch Mode</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QLabel" name="neat_label">
          <property name="maximumSize">
           <size>
@@ -126,7 +144,7 @@
           </size>
          </property>
          <property name="text">
-          <string>NEAT Output: Crutches Engaged</string>
+          <string>NEAT: Rough terrain detected</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
