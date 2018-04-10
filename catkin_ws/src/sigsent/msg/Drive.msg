@@ -1,2 +1,2 @@
 std_msgs/Int8 direction
-std_msgs/Int8 speed
+std_msgs/UInt8 speed
