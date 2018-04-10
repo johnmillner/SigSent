@@ -130,13 +130,13 @@ class Spi:
         self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2]))
 
     def drive_cb(self, data):
-        if data.direction < 0 or data.direction > 3:
+        if data.direction.data < 0 or data.direction.data > 3:
             return
 
         directions = list(self.direction_list)
-        directions[data.direction] = True
+        directions[data.direction.data] = True
 
-        self.pi.spi_xfer(self.spi, self.message_gen.create_esc_message(fwd=directions[0], left=directions[1], right=directions[2], back=directions[3], speed=data.speed))
+        self.pi.spi_xfer(self.spi, self.message_gen.create_esc_message(fwd=directions[0], left=directions[1], right=directions[2], back=directions[3], speed=data.speed.data))
             
 if __name__ == '__main__':
     try:
