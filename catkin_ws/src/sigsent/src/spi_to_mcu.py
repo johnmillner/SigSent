@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rospy
 import pigpio
-
+from std_msgs.msg import Int8
 class Message:
     """
     Functions called by the user return a list of bytes containing message header and needed content messages.
