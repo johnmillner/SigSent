@@ -82,6 +82,10 @@ Direction get_direction(byte dir)
     return DIR_ERROR;
 }
 
+//#####################################################
+//# Josh, the three functions below are ALL YOU BABY  #
+//# switch_mode, walk_move, drive_escs                #
+//#####################################################
 int switch_mode(ModeValue mode)
 {
     // Depending on the mode, do some stuff to the servos
@@ -98,7 +102,7 @@ int walk_move(Direction dir)
 // We don't have to have a parameter since the direction value is
 // a global value that was set in the previous SPI interrupt, but I
 // think its more readable to know exactly is being passed to it when tracing the caller
-int drive_escs(Direction dir)
+int drive_escs(Direction dir, int speed)
 {
     return 1;
 }
@@ -194,7 +198,7 @@ ISR (SPI_STC_vect)
     {
         //Serial.println("Receiving speed");
         // speed is just a plain old 8 bit number, no processing needed, just do it
-        byte ret = drive_escs(esc_dir);
+        byte ret = drive_escs(esc_dir, data);
 
         if (ret == 0)
         {
