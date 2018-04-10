@@ -2,6 +2,11 @@
 import rospy
 import pigpio
 from std_msgs.msg import Int8
+import roslib
+from sigsent.msg import Drive
+
+roslib.load_manifest('sigsent')
+
 class Message:
     """
     Functions called by the user return a list of bytes containing message header and needed content messages.
@@ -105,7 +110,10 @@ class Spi:
         # Subscribers and their SPI callbacks here
         self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb)
         self.walking_sub = rospy.Subscriber('walk', Int8, self.walk_cb)
-        
+        self.drive_sub = rospy.Subscriber('drive', Drive, self.drive_cb)
+
+        self.direction_list = [True] * 4
+
     def mode_cb(self, data):
         if data.data == 0:
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
@@ -113,13 +121,23 @@ class Spi:
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
         
     def walk_cb(self, data):
-        if data.data == 0:
-            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=True))
-        if data.data == 1:
-            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(left=True))
-        if data.data == 2:
-            self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(right=True))
+        if data.direction < 0 or data.direction > 3:
+            return
 
+        directions = list(self.direction_list)
+        directions[data.direction] = True
+
+        self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2]))
+
+    def drive_cb(self, data):
+        if data.direction < 0 or data.direction > 3:
+            return
+
+        directions = list(self.direction_list)
+        directions[data.direction] = True
+
+        self.pi.spi_xfer(self.spi, self.message_gen.create_esc_message(fwd=directions[0], left=directions[1], right=directions[2], back=directions[3], speed=data.speed))
+            
 if __name__ == '__main__':
     try:
         spi = Spi()
