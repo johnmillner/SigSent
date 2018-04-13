@@ -42,6 +42,13 @@ class FuelGauge:
 
         self.control = 0b11000010
 
+        # Constants defined by the Linduino code
+        self.LTC2943_CHARGE_lsb = 0.34 * (10**-3)
+        self.resistor = 0.0003
+        self.LTC2943_FULLSCALE_VOLTAGE = 23.6
+        self.LTC2943_FULLSCALE_TEMPERATURE = 510
+        self.LTC2943_FULLSCALE_CURRENT = 60 * 10**-3
+        
         # Set control bits and thresholds
         with SMBusWrapper(1) as bus:
             bus.write_i2c_block_data(self.address, self.control_reg, self.control)
@@ -94,6 +101,21 @@ class FuelGauge:
 
         self.battery_pub.publish(battery)
 
+    # The conversions defined below come from the provided Linduino code by Linear
+    def code_to_mAh(self, data):
+        return 1000 * (data * self.LTC2943_CHARGE_lsb * 16 *50E-3)/(self.resistor * 4096)
+    
+    def code_to_current(self, data):
+        return ((data - 32767) / (32767)) * ((self.LTC2943_FULLSCALE_CURRENT) / self.resistor)
+    
+    def code_to_celcius(self, data):
+        return data * ((self.LTC2943_FULLSCALE_TEMPERATURE) / 65535) - 273.15
+
+    def code_to_voltage(self, data):
+        return (data / (65535)) * self.LTC2943_FULLSCALE_VOLTAGE
+
 if __name__ == '__main__':
     try:
         fg = FuelGauge()
+    except:
+        pass        

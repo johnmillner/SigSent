@@ -6,7 +6,6 @@ import cv2
 import rospy
 import json
 import roslib
-import pigpio
 import qdarkstyle
 import math
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -374,6 +373,7 @@ class Lightbar():
         msg = Int8()
         msg.data = 2
 
+        self.checkbox.setChecked(True)
         self.light_pub.publish(msg)
 
 class FuelGauge:
