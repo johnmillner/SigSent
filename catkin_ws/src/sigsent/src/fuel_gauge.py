@@ -85,12 +85,17 @@ class FuelGauge:
         current = int.from_bytes(current_readings, byteorder='big')
         temperature = int.from_bytes(temperature_readings, byteorder='big')
 
+        voltage = self.code_to_voltage(voltage)
+        accum_charge = self.code_to_mAh(accum_charge)
+        current = self.code_to_current(current)
+        temperature = self.code_to_celcius(temperature)
+
         battery = Battery()
         battery.voltage = voltage
         battery.charge = accum_charge
         battery.current = current
         battery.temperature = temperature
-        battery.percent_full = accum_charge/self.max_cap
+        battery.percent_full = min(100, accum_charge/self.max_cap)
 
         # Turn off the motors if current too high
         if current > self.current_th_hi:
