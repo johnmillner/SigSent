@@ -115,6 +115,7 @@ class RecordVideo(QtCore.QObject):
         self.last_img = image
         self.is_new_img = True
 
+      
 class PedestrianDetection(QObject):
     finished = pyqtSignal()
 
@@ -185,6 +186,7 @@ class PedestrianDetectionWidget(QtWidgets.QWidget):
         painter.drawImage(0, 0, self.image)
         self.image = QtGui.QImage()
 
+      
 class MainWidget(QtWidgets.QWidget):
     def __init__(self, cv_widget, parent=None):
         super(MainWidget, self).__init__(parent)
@@ -212,6 +214,7 @@ class MainWidget(QtWidgets.QWidget):
         self.record_video.start_recording()
         self.run_button.setHidden(True)
 
+      
 class TeleOp():
     # rosparam set joy_node/dev "/dev/input/jsX"
     # rosrun joy joy_node
@@ -247,6 +250,7 @@ class TeleOp():
         
         self.teleop_pub.publish(msg)
 
+      
 class Maps(QObject):
     def __init__(self, parent):
         super(Maps, self).__init__(parent)
@@ -349,6 +353,7 @@ class Maps(QObject):
         self.coords = (data.latitude, data.longitude)
         self.coords_label.setText('Latitude: {}, Longitude: {}'.format(*self.coords))        
 
+      
 class Lightbar():
     def __init__(self):
         self.light_on = False
@@ -376,6 +381,7 @@ class Lightbar():
         self.checkbox.setChecked(True)
         self.light_pub.publish(msg)
 
+      
 class FuelGauge:
     def __init__(self, battery_bar, voltage_label, current_label, temperature_label):
         self.battery_bar = battery_bar
@@ -391,6 +397,7 @@ class FuelGauge:
         self.voltage_label.setText('{}V'.format(data.voltage))
         self.current_label.setText('{}A'.format(data.current))
         self.temperature_label.setText('{}F'.format(data.temperature))
+
         
 class MovementMode:
     def __init__(self, label, button):
@@ -416,6 +423,44 @@ class MovementMode:
         elif self.current_mode == 1:
             self.label.setText('Walking mode')
 
+      
+class VoiceControl:
+    def __init__(self):
+        self.vc_checkbox = QCheckBox('Enable Voice Control')
+        self.vc_checkbox.setChecked(False)
+        self.light_pub = rospy.Publisher('/blind', Int8, queue_size=10)
+        self.mode_pub = rospy.Publisher('mode', Int8, queue_size=10)
+        self.sub = rospy.Subscriber('/recognizer', String, self.vc_cb,
+                                        queue_size=10)
+
+        # 0 is voice control off, 1 is voice control on
+        self.current_mode = 0
+        self.button.clicked.connect(self.change_mode)
+
+    def vc_cb(self, data)
+        if self.vc_checkbox.isChecked()
+            if data == 'LIGHT OFF':
+                msg = Int8()
+                msg.data = 0
+                self.light_pub.publish(msg)
+            elif data == 'LIGHT ON':
+                msg = Int8()
+                msg.data = 1
+                self.light_pub.publish(msg)
+            elif data == 'STROBE':
+                msg = Int8()
+                msg.data = 2
+                self.light_pub.publish(msg)
+            elif data == 'CONVERT TO DRIVING MODE':
+                msg = Int8()
+                msg.data = 0
+                self.mode_pub.publish(msg)
+            elif data == 'CONVERT TO WALKING MODE':
+                msg = Int8()
+                msg.data = 1
+                self.mode_pub.publish(msg)
+
+      
 class Basestation(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(Basestation, self).__init__(parent)
