@@ -230,10 +230,9 @@ class GA:
                     if best_gait == None or gait.fitness > best_gait.fitness:
                         best_gait = gait
 
-                    gait1 = self.tournament_selection(self.population, config.tournament_size)
-                    gait2 = self.tournament_selection(self.population, config.tournament_size)
-
                     if random.random() <= config.crossover_probability:
+                        gait1 = self.tournament_selection(self.population, config.tournament_size)
+                        gait2 = self.tournament_selection(self.population, config.tournament_size)
                         new_population.append(self.crossover(gait1, gait2))
                         
                 for gait in self.population:
