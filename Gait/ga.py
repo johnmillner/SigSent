@@ -175,19 +175,27 @@ class GA:
                         if random.random() <= self.config.mutation_servo_probability:
                             changed_one = True
                             if random.random() <= 0.49:
-                                state += self.config.mutation_change
+                                leg.states[j] += self.config.mutation_change
                             else:
-                                state -= self.config.mutation_change
+                                leg.states[j] -= self.config.mutation_change
                             
                             # Restrict state to be within the angle_min and angle_max
                             # Overflow into the correct value
                             if state > config.angle_max[i*3 + j]:
-                                state = config.angle_min[i*3 + j] + (state - config.angle_max[i*3 + j])
+                                leg.states[j] = config.angle_min[i*3 + j] + (state - config.angle_max[i*3 + j])
                             elif state < config.angle_min[i*3 + j]:
-                                state = config.angle_max[i*3 + j] - (config.angle_min[i*3 + j] - val)
+                                leg.states[j] = config.angle_max[i*3 + j] - (config.angle_min[i*3 + j] - val)
 
             if changed_one == False:
-                gait.steps[random.randint(0, 11)].legs[random.randint(0, 5)].states[random.randint(0,2)] -= self.config.mutation_change
+                if random.random() <= 0.49:
+                    gait.steps[random.randint(0, 11)].legs[random.randint(0, 5)].states[random.randint(0,2)] -= self.config.mutation_change
+                else:
+                    gait.steps[random.randint(0, 11)].legs[random.randint(0, 5)].states[random.randint(0,2)] += self.config.mutation_change
+
+                if state > config.angle_max[i*3 + j]:
+                    leg.states[j] = config.angle_min[i*3 + j] + (state - config.angle_max[i*3 + j])
+                elif state < config.angle_min[i*3 + j]:
+                    leg.states[j] = config.angle_max[i*3 + j] - (config.angle_min[i*3 + j] - val)
 
             stable = new_gait.check_stability()
 
