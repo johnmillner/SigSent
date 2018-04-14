@@ -491,6 +491,9 @@ class Basestation(QMainWindow, Ui_MainWindow):
 
         self.mode_changer = MovementMode(self.current_mode_label, self.switch_mode_button)
 
+        self.vc = VoiceControl()
+        self.user_tools.insertWidget(3, self.vc.vc_checkbox)
+
 
 if __name__ == '__main__':
     if ROS:
