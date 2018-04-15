@@ -21,11 +21,11 @@ def enableIMU():
     p.write(gpio_pin, 1)
     
     #happy little message to let us know whats going on
-    rospy.loginfo("IMU enabled on pin " + gpio_pin )
+    rospy.loginfo("IMU enabled on pin {}".format( gpio_pin ))
 
 if __name__ == '__main__':
     try:
         enableIMU()
     except rospy.ROSInterruptException:
-        rospy.logerror("Could not enable IMU pin on GPIO pin " + gpio_pin)
+        rospy.logerror("Could not enable IMU pin on GPIO pin {}".format( gpio_pin) )
         pass
