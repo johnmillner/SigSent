@@ -430,31 +430,33 @@ class VoiceControl:
         self.vc_checkbox.setChecked(False)
         self.light_pub = rospy.Publisher('/blind', Int8, queue_size=10)
         self.mode_pub = rospy.Publisher('mode', Int8, queue_size=10)
-        self.sub = rospy.Subscriber('/recognizer', String, self.vc_cb,
+        self.sub = rospy.Subscriber('/pocketsphinx_recognizer/output', String, self.vc_cb,
                                         queue_size=10)
 
         # 0 is voice control off, 1 is voice control on
         self.current_mode = 0
         
-    def vc_cb(self, data):
+    def vc_cb(self, cmd):
+        data = cmd.data.strip().lower()
+        print(data)
         if self.vc_checkbox.isChecked():
-            if data == 'DARK':
+            if 'dark' in data:
                 msg = Int8()
                 msg.data = 0
                 self.light_pub.publish(msg)
-            elif data == 'LIGHT':
+            elif 'light' in data:
                 msg = Int8()
                 msg.data = 1
                 self.light_pub.publish(msg)
-            elif data == 'STROBE':
+            elif 'strobe' in data:
                 msg = Int8()
                 msg.data = 2
                 self.light_pub.publish(msg)
-            elif data == 'ROLL OUT':
+            elif 'roll out' in data:
                 msg = Int8()
                 msg.data = 0
                 self.mode_pub.publish(msg)
-            elif data == 'WALK':
+            elif 'walk' in data:
                 msg = Int8()
                 msg.data = 1
                 self.mode_pub.publish(msg)
