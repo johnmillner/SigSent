@@ -6,8 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /LaserScan1
         - /RobotModel1/Links1
         - /RobotModel1/Links1/mount_asus_xtion_pro_link1
+        - /Image1
       Splitter Ratio: 0.5
     Tree Height: 440
   - Class: rviz/Selection
@@ -28,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: Image
 Visualization Manager:
   Class: ""
   Displays:
@@ -274,7 +276,7 @@ Visualization Manager:
       Visual Enabled: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /RasPiCam/image
+      Image Topic: /usb_cam/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -428,7 +430,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rtabmap_ros/OrbitOriented
-      Distance: 8.21447468
+      Distance: 11.5407457
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1

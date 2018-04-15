@@ -1,20 +1,25 @@
 #!/usr/bin/python
 import rospy
-
+import roslib
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import PoseStamped
-from actionlib_msgs.msg import GoalStatus
+from actionlib_msgs.msg import GoalStatusArray
 
 roslib.load_manifest('sigsent')
 from sigsent.msg import GPSList
     
+    
+gpsList = list()
+status = 10
+first_time = True
+    
 def checker(data):
+    global first_time
     rospy.loginfo("gpsGoalManager: checking satillite connection")
     
     #check for satilite connection, if none, wait one second and check again
-    while data.status < 0:
-        rospy.loginfo("gpsGoalManager: waiting for valid GPS fix")
-        rate.sleep()
+    if data.status.status < 0 and first_time:
+        return
         
     rospy.loginfo("gpsGoalManager: Valid GPS fix found, setting up gpsGoal node")
     
@@ -35,34 +40,32 @@ def checker(data):
     msg.pose.orientation.z = 0
     msg.pose.orientation.w = 0
     
+    first_time = False
+    
     #publish message once
     localXYorigin.publish( msg )
-     
     
-def init():
+    initializer.unregister() 
     
-    #set up publisher
-    gpsGoal = rospy.Publisher('gps_goal_fix', String, queue_size=10)
+    operation()
     
-    #start up node
-    rospy.init_node('gpsGoalManager')
-    
-    #check that GPS is operational and giving signals   
-    rospy.Subscriber("fix", NavSatFix, checker)    
-        
+           
 #updates the list of gps points
 def newMessage( data ):
     rospy.loginfo("gpsGoalManager: updated list of GPS goals!")
+    global gpsList 
     gpsList = data.goals
     
 def move_baseStatus( data ):
-    rospy.loginfo("gpsGoalManager: move_base has updated its status!")
-    status = data
+    global status 
+    if( len( data.status_list ) > 0):
+        status = data.status_list[0].status
             
 def operation():
+    rospy.loginfo("gpsGoalManager: Entering Operation Mode")
     rospy.Subscriber('gps_goals_list', GPSList, newMessage)
-    rospy.Subscriber("move_base/status", move_base/status, move_baseStatus() )
-    gpsGoal = rospy.Publisher('gps_goal', NavSatFix, queue_size=10)
+    rospy.Subscriber("move_base/status", GoalStatusArray, move_baseStatus )
+    gpsGoal = rospy.Publisher('gps_goal_fix', NavSatFix, queue_size=10)
     confirmedGoal = rospy.Publisher('confirmed_goal', NavSatFix, queue_size=10)
     
     while not rospy.is_shutdown():
@@ -73,26 +76,18 @@ def operation():
             rospy.loginfo("gpsGoalManager: going to new point")
             #publish the goal to gps_goal
             gpsGoal.publish( gpsPoint )
+            rospy.loginfo('List len: {}'.format(len(gpsList)))
             
-            #wait for goal to be accepted by move_base
-            while status == 0:
-                rate.sleep()
-                
-            #ensure that the goal was successfully accepted - if not, move to next goal
-            if status != 1 or status != 3:
-                rospy.logwarn("gpsGoalManager: there was an issue with move_base")
+            
+            #wait for plan to be accepted and pathed to
+            while status <= 1:
+                pass      
+               
+            if status < 3 :
+                rospy.logwarn('Plan aborted')
                 continue
             
-            #wait for robot to travel to goal    
-            while status == 1:
-                rate.sleep
-                
-            #if goal not reached, shrug - gotta chug on?
-            if status != 3:
-                rospy.logwarn("gpsGoalManager: there was an issue with move_base")
-                continue        
-            
-            rospy.loginfo("gpsGoalManager: Reached last goal!")
+            rospy.loginfo("gpsGoalManager: Reached goal!")
             #we've made it to our goal, lets wait a little bit
             rospy.Rate(5).sleep()
             
@@ -106,11 +101,16 @@ def operation():
 
 if __name__ == '__main__':
     try:
-        rate = rospy.Rate(1)
-        gpsList = list()
-        status = 9
+        #start up node
+        rospy.init_node('gpsGoalManager')     
     
-        init()
-        operation()
+        #set up publisher
+        gpsGoal = rospy.Publisher('gps_goal_fix', NavSatFix, queue_size=10)
+           
+        #check that GPS is operational and giving signals   
+        initializer = rospy.Subscriber("fix", NavSatFix, checker) 
+        
+        rospy.spin()
+        
     except rospy.ROSInterruptException:
         pass
