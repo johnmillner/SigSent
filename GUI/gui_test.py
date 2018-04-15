@@ -20,7 +20,7 @@ from imutils import paths
 from os import path
 from threading import Thread
 from time import sleep
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, String
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, Twist
@@ -435,10 +435,10 @@ class VoiceControl:
 
         # 0 is voice control off, 1 is voice control on
         self.current_mode = 0
-        self.button.clicked.connect(self.change_mode)
+        
 
-    def vc_cb(self, data)
-        if self.vc_checkbox.isChecked()
+    def vc_cb(self, data):
+        if self.vc_checkbox.isChecked():
             if data == 'LIGHT OFF':
                 msg = Int8()
                 msg.data = 0
