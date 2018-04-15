@@ -436,14 +436,13 @@ class VoiceControl:
         # 0 is voice control off, 1 is voice control on
         self.current_mode = 0
         
-
     def vc_cb(self, data):
         if self.vc_checkbox.isChecked():
-            if data == 'LIGHT OFF':
+            if data == 'DARK':
                 msg = Int8()
                 msg.data = 0
                 self.light_pub.publish(msg)
-            elif data == 'LIGHT ON':
+            elif data == 'LIGHT':
                 msg = Int8()
                 msg.data = 1
                 self.light_pub.publish(msg)
@@ -451,11 +450,11 @@ class VoiceControl:
                 msg = Int8()
                 msg.data = 2
                 self.light_pub.publish(msg)
-            elif data == 'CONVERT TO DRIVING MODE':
+            elif data == 'ROLL OUT':
                 msg = Int8()
                 msg.data = 0
                 self.mode_pub.publish(msg)
-            elif data == 'CONVERT TO WALKING MODE':
+            elif data == 'WALK':
                 msg = Int8()
                 msg.data = 1
                 self.mode_pub.publish(msg)
