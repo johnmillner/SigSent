@@ -221,7 +221,7 @@ class TeleOp():
     # Add these to launch files so they launch with sigsent local.launch items
     def __init__(self):
         if ROS:
-            self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
+            self.joy_sub = rospy.Subscriber('joy_throttle', Joy, self.joy_cb, queue_size=10)
             self.teleop_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
         
         # Choose an upperbound for the twist value
