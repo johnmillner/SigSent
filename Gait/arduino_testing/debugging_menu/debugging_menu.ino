@@ -1,164 +1,225 @@
 //Imported ibraries
 #include <DynamixelSerial1.h>
 
-//Global variables
-int temperature,voltage, position; //used when status of the servo is requested
-int ID =1, newID; //ID refers to current ID or old ID when setting a new ID for servos
-int input_position=500, current_position, new_position; //input used as a "buffer" when
-int menu_start = 0, menu_printed = 0;
-char menu_mode;
-int c=0;
 
+//Drive mode angles
+//0 358 1 512 2 600 3 664 4 512 5 409 6 512 7 700 8 200 9 512 10 323 11 825 12 664 13 500 14 600 15 358 16 512 17 1000
+//0 358 1 426 2 512 3 664 4 596 5 512 6 512 7 700 8 200 9 512 10 323 11 825 12 664 13 426 14 512 15 358 16 596 17 512
+
+//Default walking angles
+
+//Global variables
+int newID, torque_map, current_position, new_position, id;
+int ID =1, torque_level = 512, input_position=500, user_input = 0;
+bool menu_printed;
+char menu_mode;
+int c=0;//counter for debugging
 
 //Function prototypes
-void print_menu(int sel);
+void print_message(int sel);
 int check_value(int value_selected, int input_value);
 void test_servoID(int ID);
+void setup_torque(int torque);
 
 
-
-void setup(){
-Serial.begin(9600);              // Begin Serial Comunication for serial monitor
-Dynamixel.begin(1000000,2);  // Initialize the servo at 1Mbps and Pin Control 2
-randomSeed(analogRead(0));
-delay(1000);
-
-// wait for serial port to connect. Needed for native USB port only
-while (!Serial){}
+//Initalize all parameters and variables
+void setup()
+{
+  Serial.begin(9600);          // Begin Serial Comunication for serial monitor
+  Dynamixel.begin(1000000,2);  // Initialize the servo at 1Mbps and Pin Control 2
+  menu_printed = false;
+  randomSeed(analogRead(0));   // seed the random function that is used for servo ID testing
+  setup_torque(torque_level);  //set a default torque value
+  while (!Serial){} // wait for serial port to connect. Needed for native USB port only
+  delay(1000);
 }
 
 
-void loop(){
-  //Start of menu check if the menu has been printed already
-  if (menu_start == 0 && menu_printed == 0) {
-    print_menu(1);
-    menu_printed = 1;
+void loop()
+{
+  //check Start of menu if the menu has been printed already
+  if (!menu_printed)
+  {
+    print_message(1);
+    menu_printed = true;
   }
-  //otherwise print the escape message to the user for reminder
-  else if (menu_start == 1)
-    print_menu(2);
-//  Serial.println(menu_start);
-//  Serial.println(menu_printed);
 
-  if (Serial.available()>0) {
+//if serial input is availble read it to enter into a menu mode
+  if (Serial.available()>0)
+  {
     menu_mode = Serial.read();
     Serial.println(menu_mode);
-    if(sizeof(menu_mode) == sizeof(char)){
-      switch (menu_mode) {
-        case 'm':    //Single moving mode
-          Serial.println();
-          Serial.println();
-          Serial.println("_____Moving mode_____");
-          Serial.println("Enter in the form of 'ID Position'. Can string together multiple commands.");
-          Serial.println("(Do not use the value of 0 for ID)");
-          while(ID > -1){
-            if (Serial.available()>0) {
-              ID = Serial.parseInt();
-              input_position = Serial.parseInt();
-//              Serial.println(input);
-//                Serial.println(c);
-//                c++;
-              if (ID > 0 && input_position > 0){
-                Serial.print("ID = ");
-                Serial.print(ID);
-                Serial.print(" ");
-                Serial.print("Input position = ");
-                Serial.println(input_position);
-                Dynamixel.move(ID, input_position);
-                while(Dynamixel.moving(ID)){}
-              }
+    switch (menu_mode)
+    {
+      case 'm':    //Moving mode
+        Serial.println();
+        Serial.println();
+        Serial.println("_____Moving mode_____");
+        Serial.println("Enter in the form of 'ID Position'. Can string together multiple commands.");
+        print_message(2);
+        while(ID > -1)
+        {
+          if (Serial.available()>0)
+          {
+            ID = Serial.parseInt();
+            input_position = Serial.parseInt();
+            if (ID > -1 && input_position > 0)
+            {
+              Serial.print("ID = ");
+              Serial.print(ID);
+              Serial.print(" ");
+              Serial.print("Input position = ");
+              Serial.println(input_position);
+              Dynamixel.move(ID, input_position);
+              //while(Dynamixel.moving(ID)){}
             }
+            else{break;}
+          }
+        }
+        break;
+      case 's':    //Status of all servos
+          Serial.println();
+          Serial.println();
+          Serial.println("_____Return position mode_____");
+          print_message(2);
+          while(user_input != -1)
+          {
+              for(id=0;id<18;id++)
+              {
+//                Serial.print("'");
+                Serial.print(id);
+                Serial.print("@");
+                Serial.print(Dynamixel.readPosition(id));
+                Serial.print("|");
+              }
+              Serial.println();
+              id=0; //reset id to reread the servo positions
+              if(Serial.available())
+              {
+                user_input=Serial.parseInt();
+              }
           }
           break;
-        case '#':    // Mode to set ID numbers
-          Serial.println("_____Set ID mode_____");
-          Serial.println("Enter in form of 'old_ID new_ID'.");
-          Serial.println("(Do not use the value of 0 for ID");
-          while(ID > -1){
-            if (Serial.available()>0) {
-              ID = Serial.parseInt();
-              newID = Serial.parseInt();
-              if (ID > 0 && newID > 0){
-                Serial.print("Old ID = ");
-                Serial.print(ID);
-                Serial.print(" New ID = ");
-                Serial.println(newID);
-                Dynamixel.setID(ID, newID);
+      case '#':    // Mode to set ID numbers
+        Serial.println("_____Set ID mode_____");
+        Serial.println("Enter in form of 'old_ID new_ID'.");
+        print_message(2);
+        while(ID > -1)
+        {
+          if (Serial.available()>0)
+          {
+            ID = Serial.parseInt();
+            newID = Serial.parseInt();
+            if (ID > -1 && newID > -1)
+            {
+              Serial.print("Old ID = ");
+              Serial.print(ID);
+              Serial.print(" New ID = ");
+              Serial.println(newID);
+              Dynamixel.setID(ID, newID);
 
-                Serial.print("Servo ID changed from '");
-                Serial.print(ID);
-                Serial.print("' to '");
-                Serial.print(newID);
-                Serial.println("'.");
-                Serial.println();
-                test_servoID(newID);
-              }
+              Serial.print("Servo ID changed from '");
+              Serial.print(ID);
+              Serial.print("' to '");
+              Serial.print(newID);
+              Serial.println("'.");
+              Serial.println();
+              test_servoID(newID);
             }
           }
-          break;
-        case 'T':    // Torque mode
-          Serial.println("_____Torque limits mode_____");
-          Serial.println("Not Ready Yet");
-          Dynamixel.setMaxTorque(1,512);
-          break;
-        case 'a':    // Angle mode
-          Serial.println("_____Angle limits mode_____");
-          Serial.println("Not Ready Yet");
-          break;
-        case 'c':    //
-          Serial.println("_____Current limits mode_____");
-          Serial.println("Not Ready Yet");
-          break;
-        case 'v':    //
-          Serial.println("_____Voltage limits mode_____");
-          Serial.println("Not Ready Yet");
-//          Dynamixel.setVoltageLimit(1,65,120);  // Set Operating Voltage from 6.5v to 12v
-          break;
-        case 't':    // your hand is nowhere near the sensor
-          Serial.println("_____Temperature limits mode_____");
-          Serial.println("Not Ready Yet");
-//          Dynamixel.setTempLimit(1,80);  // Set Max Temperature to 80 Celcius
-          break;
-        default:
-          Serial.println("Please give a valid menu input");
-      }
-      //reset menu flags & ID(used as a flag as well)
-          menu_printed = menu_start = 253;
-          ID = 1;
-          Serial.println();
-          Serial.println();
-          Serial.println();
-          Serial.println();
-          
+        }
+        break;
+      case 'T':    // Torque limits mode
+        Serial.println("_____Torque limits mode_____");
+        Serial.println("Enter in form of 'New_Torque_Limit'.");
+        print_message(2);
+       //Serial.println("Not Ready Yet");
+        while(torque_level > -1)
+        {
+          if (Serial.available()>0)
+          {
+              torque_level = Serial.parseInt();
+              if(torque_level >-1)
+              {
+                setup_torque(torque_level);
+                Serial.print("Servo Max torque changed to ");
+                torque_map = map(torque_level, 0, 1023, 0, 100);
+                Serial.print(torque_map);
+                Serial.print("%(");
+                Serial.print(torque_level);
+                Serial.println(").");
+              }
+          }
+        }
+        break;
+      case 'a':    // Angle limits mode
+        Serial.println("_____Angle limits mode_____");
+        Serial.println("Not Ready Yet");
+        print_message(2);
+        break;
+      case 'c':    // Current limits mode
+        Serial.println("_____Current limits mode_____");
+        Serial.println("Not Ready Yet");
+        print_message(2);
+        break;
+      case 'v':    // Voltage limits mode
+        Serial.println("_____Voltage limits mode_____");
+        Serial.println("Not Ready Yet");
+        print_message(2);
+        //Dynamixel.setVoltageLimit(1,65,120);  // Set Operating Voltage from 6.5v to 12v
+        break;
+      case 't':    // Temperature limits mode
+        Serial.println("_____Temperature limits mode_____");
+        Serial.println("Not Ready Yet");
+        print_message(2);
+        // Dynamixel.setTempLimit(1,80);  // Set Max Temperature to 80 Celcius
+        break;
+      default:
+        Serial.println("Please give a valid menu input");
+        while (Serial.available())
+        {
+          menu_mode = Serial.read();
+        }
     }
-
-//    temperature = Dynamixel.readTemperature(input_position); // Request and Print the Temperature
-//    voltage = Dynamixel.readVoltage(input_position);         // Request and Print the Voltage
-//    position = Dynamixel.readPosition(input_position);       // Request and Print the Position
-    //Dynamixel.move(1,random(200,800));  // Move the Servo radomly from 200 to 800
-//    Dynamixel.move(ID, input_position);
-    // Dynamixel.move(2, 400);
-
+    //reset menu flags & ID(used as a flag as well)
+    menu_printed = false;
+    user_input = 0;
+    ID = 1;
+    torque_level = 512;
+    Serial.println();
+    Serial.println();
+    Serial.println();
+    Serial.println();
   }
 }
 
-void print_menu(int sel){
-
-  switch (sel){
+//different printout messages to reference when creating the menu
+void print_message(int sel)
+{
+  switch (sel)
+  {
     case 1:
       Serial.println("'m' for moving testing");
+      Serial.println("'s' for current servo positions");
       Serial.println("'#' for set ID");
       Serial.println("'T' for set torque limits");
       Serial.println("'a' for set angle limits");
       Serial.println("'c' for set current limits");
       Serial.println("'v' for set voltage limits");
       Serial.println("'t' for set temperature limits");
-
       Serial.println("Choose which mode:");
       break;
 
     case 2:
       Serial.println("Enter -1' to go back to menu");
+      break;
+
+    case 3:
+      Serial.println("Value enter Invalid. Must be between 0-252 for a valid ID.");
+      break;
+
+    case 4:
+      Serial.println("Value enter Invalid. Must be between 0-1023 for a valid ID.");
       break;
 
   }
@@ -170,11 +231,25 @@ int check_value(int value_selected, int input_value){
 
   switch (value_selected){
     case 1: //Valid ID range
-      Serial.println("Choose which mode:");
+      if(value_selected >= 0 && value_selected <= 252)
+      {
+        return 1;
+      }
+      else{
+        print_message(3);
+        return 0;
+      }
       break;
 
     case 2: //Valid servo position range
-      Serial.println("Enter -1' to go back to menu");
+      if(value_selected >= 0 && value_selected <= 1023)
+      {
+        return 1;
+      }
+      else{
+        print_message(4);
+        return 0;
+      }
       break;
   }
 }
@@ -183,11 +258,13 @@ int check_value(int value_selected, int input_value){
 //used when setting the new servo id.
 //should move the servo with the new ID and check if it moved from the
 //position and alert the user if it was successful
-void test_servoID(int ID){
+void test_servoID(int ID)
+{
   current_position = Dynamixel.readPosition(ID);
   new_position = random(450,650);
   Dynamixel.move(newID, new_position);
-  if(Dynamixel.moving(ID)){
+  if(Dynamixel.moving(ID))
+  {
     Serial.println();
     Serial.print("Servo '");
     Serial.print(ID);
@@ -198,5 +275,13 @@ void test_servoID(int ID){
     Serial.println("'.");
     Serial.println();
     Serial.println();
+  }
+}
+
+void setup_torque(int torque)
+{
+  for (id=0; id<18;id++)
+  {
+  Dynamixel.setMaxTorque(id,torque);
   }
 }
