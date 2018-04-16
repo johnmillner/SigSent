@@ -100,6 +100,8 @@ class Spi:
     def __init__(self):
         rospy.init_node('spi_to_mcu')
         
+        self.mode = 0
+
         self.pi = pigpio.pi()
         self.spi_bus = 1
         self.spi_baud = 115200
@@ -114,34 +116,52 @@ class Spi:
         
         self.direction_list = [False] * 4
 
+        self.current_msg = None
+
     def mode_cb(self, data):
         if data.data == 0:
+            self.mode = 0
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
         elif data.data == 1:
+            self.mode = 1
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
         
     def walk_cb(self, data):
-        if data.data < 0 or data.data > 3:
+        if data.data < 0 or data.data > 4:
             return
+
+        if data.data == 3:
+            self.current_msg = None
 
         directions = list(self.direction_list)
         directions[data.data] = True
-
-        self.pi.spi_xfer(self.spi, self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2]))
-
+        self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
+        
     def drive_cb(self, data):
         if data.direction.data < 0 or data.direction.data > 3:
             return
 
+        if data.speed.data == 0:
+            self.current_msg = None
+
         directions = list(self.direction_list)
         directions[data.direction.data] = True
 
-        self.pi.spi_xfer(self.spi, self.message_gen.create_esc_message(fwd=directions[0], left=directions[1], right=directions[2], back=directions[3], speed=data.speed.data))
+        self.current_msg = self.message_gen.create_esc_message(fwd=directions[0], left=directions[1], right=directions[2], back=directions[3], speed=data.speed.data)
             
 if __name__ == '__main__':
     try:
         spi = Spi()
 
-        rospy.spin()
+        while not rospy.is_shutdown():
+            # Driving mode
+            if spi.mode == 0 and spi.current_msg != None:
+                self.pi.spi_xfer(self.spi, self.current_msg)
+
+            # Walking mode
+            elif spi.mode == 1  and spi.current_msg != None:
+                self.pi.spi_xfer(self.spi, self.current_msg)        
+
+            self.rate.sleep()
     except rospy.ROSInterruptException:
         pass

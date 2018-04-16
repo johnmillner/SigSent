@@ -224,20 +224,25 @@ class TeleOp():
         self.mode = 0
 
         if ROS:
-            self.joy_sub = rospy.Subscriber('joy_throttle', Joy, self.joy_cb, queue_size=10)
+            self.joy_sub = rospy.Subscriber('joy', Joy, self.joy_cb, queue_size=10)
             self.drive_pub = rospy.Publisher('drive', Drive, queue_size=1)
             self.walk_pub = rospy.Publisher('walk', Int8, queue_size=1)
         
         # Choose an upperbound for the twist value
         self.speed = 0.5
 
+        self.current_msg = None
+
         self.teleop_enabled = False
         self.checkbox = QCheckBox('Enable TeleOp')
         self.checkbox.setChecked(False)
         self.checkbox.toggled.connect(self.toggled_checkbox)
-
+        
+        
+        
     def toggled_checkbox(self):
         self.teleop_enabled ^= True
+
 
     def joy_cb(self, data):
         if not self.teleop_enabled:
@@ -263,7 +268,7 @@ class TeleOp():
             direction = 1
         elif msg.angular.z < 0:
             direction = 2
-        
+
         # Driving mode
         if direction != None and self.mode == 0:
             d = Drive()
@@ -276,6 +281,10 @@ class TeleOp():
         elif direction != None and self.mode == 1:
             cmd = Int8()
             cmd.data = direction
+
+            # tells spi to stop sending
+            if msg.linear.x == 0 and msg.angular.z == 0:
+                cmd.data = 3
 
             self.walk_pub.publish(cmd)
 
