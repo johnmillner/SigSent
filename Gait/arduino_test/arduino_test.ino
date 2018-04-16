@@ -70,6 +70,9 @@ byte receiving_walking_move = 0;
 byte receiving_esc_direction = 0;
 byte receiving_esc_speed = 0;
 
+//flags
+byte ready_flag = 0;
+
 // General Variables for usage in the program
 byte return_status_byte = 0; //used when returning from a function for status of its execution
 int id = 0; //general id variable for storing servo IDs
@@ -78,6 +81,7 @@ int torque_level = 920; //sets torque to ~90% as default
 float diff = 0;
 float tolerance = 0.1;
 float current_tolerance = 0;
+int number_of_gait_states = sizeof (walking_gait_tripod) / sizeof (walking_gait_tripod[0]);
 
 
 
@@ -170,6 +174,7 @@ byte default_walking_stance()
   for (id=0; id<18;id++)
   {
     Dynamixel.move(id, default_walking[id]);
+
     check_servo_positions(-1);
   }
 }
@@ -178,7 +183,7 @@ byte default_driving_stance()
 {
   for (id=0; id<18;id++)
   {
-    Dynamixel.move(id, default_driving[id]);
+    Dynamixel.move(id, default_driving[id])
     check_servo_positions(-1);
   }
 }
@@ -196,7 +201,6 @@ ISR (SPI_STC_vect)
 {
     // grab byte from SPI Data Register
     byte data = SPDR;
-    SPDR = data + 1;
 
     //Serial.print("Received: ");
     Serial.println(data);
@@ -341,15 +345,23 @@ byte check_servos_for_overheat()
 // -+10% tolerance and if not corrects the servo takes in current
 byte check_servo_positions(int current_gait_position)
 {
-  // Need to check if servos are in position and if not then correct
-  if (current_gait_position == -1)
+  if (current_gait_position >  (number_of_gait_states-1))
   {
-
+    //
+    return 0;
   }
 
   for(id=0; id<18;id++)
   {
-    return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+    if (current_gait_position == -1)
+    {
+      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+    }
+    else
+    {
+      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+
+    }
 
     if (return_status_byte == 1)
     {
@@ -407,16 +419,24 @@ void setup()
   Dynamixel.begin(1000000,2);  // Initialize the servo at 1Mbps and Pin Control 2
   delay(2000);
   setup_torque(torque_level);
-  Serial.begin(9600);
-  //default_walking_stance();
-  pinMode(LED_BUILTIN, OUTPUT);
+  // default_walking_stance();
 }
 
 void loop()
 {
-  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(500);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(500); 
+  while(!command)
+  {
+    // Do nothing
+    ready_flag = 0xFF;
+  }
 
+    // doing command
+    //
+    //set ready flag to not ready/zero
+    //
+    //do command
+    //
+    //set command to zero
+
+    ready_flag = 0;
 }
