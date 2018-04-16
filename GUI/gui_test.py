@@ -393,10 +393,10 @@ class FuelGauge:
             self.battery_sub = rospy.Subscriber('battery', Battery, self.battery_cb, queue_size=10)
 
     def battery_cb(self, data):
-        self.battery_bar.setValue(int(math.ceil(data.percent_full * 100)))
-        self.voltage_label.setText('{}V'.format(data.voltage))
-        self.current_label.setText('{}A'.format(data.current))
-        self.temperature_label.setText('{}F'.format(data.temperature))
+        self.battery_bar.setValue(int(math.ceil(data.percent_full.data * 100)))
+        self.voltage_label.setText('Voltage: {}V'.format(data.voltage.data))
+        self.current_label.setText('Current: {}A'.format(data.current.data))
+        self.temperature_label.setText('Temperature: {}C'.format(data.temperature.data))
 
         
 class MovementMode:
