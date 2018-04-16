@@ -4,6 +4,7 @@ import time
 import sys
 import rospy
 import roslib
+from std_msgs.msg import Float32
 from sigsent.msg import GPSList, Battery, Drive
 
 roslib.load_manifest('sigsent')
@@ -57,10 +58,14 @@ class FuelGauge:
 
         self.battery_pub = rospy.Publisher('battery', Battery, queue_size=10)
         self.motor_pub = rospy.Publisher('drive', Drive, queue_size=10)
+        self.resistor_sub = rospy.Subscriber('resistor', Float32, self.resistor_cb, queue_size=10)
 
         # Read fuel gauge at 10Hz
         self.read_freq = rospy.Rate(2)
         self.update()
+
+    def resistor_cb(self, msg):
+        self.resistor = msg.data
 
     def update(self):
         try:
