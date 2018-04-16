@@ -103,7 +103,8 @@ class Spi:
         self.pi = pigpio.pi()
         self.spi_bus = 1
         self.spi_baud = 115200
-        self.spi = self.pi.spi_open(self.spi_bus, self.spi_baud)
+        self.spi_mode = 0
+        self.spi = self.pi.spi_open(self.spi_bus, self.spi_baud, self.spi_mode)
 
         self.message_gen = Message()
 
@@ -141,7 +142,6 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
-
         rospy.spin()
     except rospy.ROSInterruptException:
-        pass
+        spi.pi.spi_close(spi.pi.spi)

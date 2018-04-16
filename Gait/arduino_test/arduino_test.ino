@@ -35,6 +35,10 @@
 #include <SPI.h>
 #include <DynamixelSerial3.h>
 
+// This flag is true if we are executing a command
+byte doing_command = 0;
+byte message_data = -1;
+
 // These definitions came from the pi_spi_modules.py file that define the message
 // class and its generation functions :)
 byte mode_change_header = 0b00110000;
@@ -200,106 +204,18 @@ byte drive_escs(Direction dir, int speed)
 ISR (SPI_STC_vect)
 {
     // grab byte from SPI Data Register
-    byte data = SPDR;
+    message_data = SPDR;
 
     //Serial.print("Received: ");
     Serial.println(data);
 
-    if (receiving_header)
+    // 10101010 will be an alert pi sends to MCU when it has the OK 
+    // to send a command. Tells MCU to expect a message header
+    if (message_data == 0b10101010)
     {
-        //Serial.println("Receiving header");
-        MessageType message_type = get_message_type(data);
-
-        if (message_type == MESSAGE_ERROR)
-            return;
-
-        receiving_header = 0;
-
-        if (message_type == MODE_TYPE)
-            receiving_mode = 1;
-        else if (message_type == WALKING_TYPE)
-            receiving_walking_move = 1;
-        else if (message_type == ESC_TYPE)
-            receiving_esc_direction = 1;
-    }
-
-    else if (receiving_mode)
-    {
-        ModeValue mode = get_mode(data);
-
-        if (mode == MODE_ERROR)
-        {
-            // Failure, start over
-            receiving_header = 1;
-            receiving_mode = 0;
-
-            return;
-        }
-
-        // Got the mode, now do the crazy servo code that switches mode
-        byte ret = switch_mode(mode);
-
-        if (ret == 0)
-        {
-            ;// Failed to switch mode, how do we handle this?
-        }
-
-        receiving_mode = 0;
+        doing_command = 1;
         receiving_header = 1;
     }
-
-    else if (receiving_walking_move || receiving_esc_direction)
-    {
-        //Serial.println("Receiving direction");
-        Direction dir = get_direction(data);
-
-        if (dir == DIR_ERROR)
-        {
-            if (receiving_walking_move)
-                receiving_walking_move = 0;
-            else
-                receiving_esc_direction = 0;
-
-            receiving_header = 1;
-        }
-
-        if (receiving_walking_move)
-        {
-            byte ret = walk_move(dir);
-
-            if (ret == 0)
-            {
-                ;
-            }
-
-            receiving_header = 1;
-            receiving_walking_move = 0;
-        }
-
-        else if (receiving_esc_direction)
-        {
-            esc_dir = dir;
-            receiving_esc_direction = 0;
-            receiving_esc_speed = 1;
-        }
-    }
-
-    else if (receiving_esc_speed)
-    {
-        //Serial.println("Receiving speed");
-        // speed is just a plain old 8 bit number, no processing needed, just do it
-        byte ret = drive_escs(esc_dir, data);
-
-        if (ret == 0)
-        {
-            ;
-        }
-
-        receiving_header = 1;
-        receiving_esc_speed = 0;
-        esc_dir = DIR_ERROR;
-    }
-
 }
 
 // This function checks all servos if there are any errors for overloading or
@@ -424,19 +340,137 @@ void setup()
 
 void loop()
 {
-  while(!command)
-  {
-    // Do nothing
-    ready_flag = 0xFF;
-  }
+    while(!doing_command)
+    {
+        // Do nothing
+        ready_flag = 0xFF;
+    }
 
-    // doing command
-    //
-    //set ready flag to not ready/zero
-    //
-    //do command
-    //
-    //set command to zero
+    while (message_data == -1)
+    {
+        // Wait for message from PI
+    }
 
-    ready_flag = 0;
+    if (doing_command && receiving_header)
+    {
+        Serial.println("Receiving header");
+        MessageType message_type = get_message_type(message_data);
+
+        if (message_type == MESSAGE_ERROR)
+        {
+            // ABORT
+            receiving_header = 0;
+            doing_command = 0;
+            message_data = -1;
+        }
+        else
+        {
+            receiving_header = 0;
+
+            if (message_type == MODE_TYPE)
+                receiving_mode = 1;
+            else if (message_type == WALKING_TYPE)
+                receiving_walking_move = 1;
+            else if (message_type == ESC_TYPE)
+                receiving_esc_direction = 1;
+            
+            message_data = -1;
+        }
+    }
+
+    else if (doing_command && receiving_mode)
+    {
+        // This shouldnt be necessary, but just in case...
+        while (message_data == -1)
+        {
+            // Wait for message from PI
+        }
+
+        ModeValue mode = get_mode(data);
+
+        if (mode == MODE_ERROR)
+        {
+            // Anything special here?
+        }
+        else
+        {
+            // Got the mode, now do the crazy servo code that switches mode
+            byte ret = switch_mode(mode);
+
+            if (ret == 0)
+            {
+                ;// Failed to switch mode, how do we handle this?
+            }
+        }
+
+        // Whether we fail or succeed, no more to be done, go back into idle mode
+        receiving_mode = 0;
+        doing_command = 0;
+        message_data = -1;
+    }
+
+    else if (doing_command && (receiving_walking_move || receiving_esc_direction))
+    {
+        // This shouldnt be necessary, but just in case...
+        while (message_data == -1)
+        {
+            // Wait for message from PI
+        }
+
+        //Serial.println("Receiving direction");
+        Direction dir = get_direction(data);
+
+        if (dir == DIR_ERROR)
+        {
+            if (receiving_walking_move)
+                receiving_walking_move = 0;
+            else
+                receiving_esc_direction = 0;
+
+            doing_command = 0;
+            message_data = -1;
+        }
+
+        if (receiving_walking_move)
+        {
+            byte ret = walk_move(dir);
+
+            if (ret == 0)
+            {
+                ;
+            }
+
+            receiving_header = 1;
+            receiving_walking_move = 0;
+        }
+
+        else if (receiving_esc_direction)
+        {
+            esc_dir = dir;
+            receiving_esc_direction = 0;
+            receiving_esc_speed = 1;
+        }
+    }
+
+    else if (doing_command && receiving_esc_speed)
+    {
+        // This shouldnt be necessary, but just in case...
+        while (message_data == -1)
+        {
+            // Wait for message from PI
+        }
+
+        //Serial.println("Receiving speed");
+        // speed is just a plain old 8 bit number, no processing needed, just do it
+        byte ret = drive_escs(esc_dir, data);
+
+        if (ret == 0)
+        {
+            ;
+        }
+
+        receiving_header = 1;
+        receiving_esc_speed = 0;
+        esc_dir = DIR_ERROR;
+    }
 }
