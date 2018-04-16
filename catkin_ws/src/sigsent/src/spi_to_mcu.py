@@ -15,6 +15,8 @@ class Message:
 
     def __init__(self):
 
+        self.status_req = 0b10101010
+
         # Header message bits define what message is coming next so that the MCU
         # knows how to parse it
         self.mode_change = 0b00110000
@@ -159,18 +161,27 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
-        
+        waiting = False
         while not rospy.is_shutdown():
+
+            if waiting == True:
+                count, rx_data = spi.pi.spi_xfer(spi.spi, [spi.status_req])
+                
+                if rx_data[0] == 0b11111111:
+                    waiting = False
+
             # Driving mode
-            if spi.mode == 0 and spi.current_msg != None:
-                print('Sent drive message')
+            elif spi.mode == 0 and spi.current_msg != None:
+                #print('Sent drive message')
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)
+                waiting = True
 
             # Walking mode
             elif spi.mode == 1  and spi.current_msg != None:
-                print('Sent walk message')
+                #print('Sent walk message')
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
-
-            spi.rate.sleep()
+                waiting = True
+            
+            #spi.rate.sleep()
     except rospy.ROSInterruptException:
         pass
