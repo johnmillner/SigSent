@@ -33,7 +33,7 @@
 
 
 #include <SPI.h>
-#include <DynamixelSeria3.h>
+#include <DynamixelSerial3.h>
 
 // These definitions came from the pi_spi_modules.py file that define the message
 // class and its generation functions :)
@@ -57,9 +57,11 @@ byte angle_limit_error = 0b00000010;
 int default_walking[] = {512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512};
 int default_driving[] = {358, 426, 512, 664, 596, 512, 512, 700, 200, 512, 323, 825, 664, 426, 512, 358, 596, 512};
 
-int walking_gait_tripod[][] = {{512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512},
-                      {},
-                      {}}
+int walking_gait_tripod[][18] = {{512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512},
+                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+int gait_state =-1;
+
 // Lets the MCU to know what to expect for the next message to parse
 // it correctly
 byte receiving_header = 1;
@@ -72,6 +74,7 @@ byte receiving_esc_speed = 0;
 byte return_status_byte = 0; //used when returning from a function for status of its execution
 int id = 0; //general id variable for storing servo IDs
 int counter= 0; //general counter
+int torque_level = 920; //sets torque to ~90% as default
 float diff = 0;
 float tolerance = 0.1;
 float current_tolerance = 0;
@@ -155,7 +158,29 @@ byte switch_mode(ModeValue mode)
 byte walk_move(Direction dir)
 {
 
-    return 1;
+
+
+  gait_state++;
+  return 1;
+}
+
+// This function puts SigSent into the default walking stance
+byte default_walking_stance()
+{
+  for (id=0; id<18;id++)
+  {
+    Dynamixel.move(id, default_walking[id]);
+    check_servo_positions(-1);
+  }
+}
+
+byte default_driving_stance()
+{
+  for (id=0; id<18;id++)
+  {
+    Dynamixel.move(id, default_driving[id]);
+    check_servo_positions(-1);
+  }
 }
 
 // We don't have to have a parameter since the direction value is
@@ -171,6 +196,7 @@ ISR (SPI_STC_vect)
 {
     // grab byte from SPI Data Register
     byte data = SPDR;
+    SPDR = data + 1;
 
     //Serial.print("Received: ");
     Serial.println(data);
@@ -228,7 +254,7 @@ ISR (SPI_STC_vect)
             if (receiving_walking_move)
                 receiving_walking_move = 0;
             else
-                receiving_esc_di  rection = 0;
+                receiving_esc_direction = 0;
 
             receiving_header = 1;
         }
@@ -281,15 +307,33 @@ ISR (SPI_STC_vect)
 // those servos and move them back into place
 byte check_servos_for_overload()
 {
-  for(id=17;id>=0;id--)
+  for(id=0; id<18;id++)
   {
-    return_status_byte=Dynamixel.ping(id);
+    return_status_byte = (byte)Dynamixel.ping(id);
 
     if (return_status_byte & overload_error)
     {
+      // This means ther servos are in overload
       return 1;
     }
   }
+  // This means the servos aren't in overload
+  return 0;
+}
+
+byte check_servos_for_overheat()
+{
+  for(id=0; id<18;id++)
+  {
+    return_status_byte = (byte)Dynamixel.ping(id);
+
+    if (return_status_byte & overheating_error)
+    {
+      // This means ther servos are in overheat
+      return 1;
+    }
+  }
+  // This means the servos aren't in overheat
   return 0;
 }
 
@@ -297,64 +341,82 @@ byte check_servos_for_overload()
 // -+10% tolerance and if not corrects the servo takes in current
 byte check_servo_positions(int current_gait_position)
 {
-    // Need to check if servos are in position and if not then correct
-    for(id=17;id>=0;id--)
-    {
-      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+  // Need to check if servos are in position and if not then correct
+  if (current_gait_position == -1)
+  {
 
-      if (return_status_byte == 1)
+  }
+
+  for(id=0; id<18;id++)
+  {
+    return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+
+    if (return_status_byte == 1)
+    {
+      continue;
+    }
+    else
+    {
+      while(return_status_byte != 1)
       {
-        continue;
-      }
-      else
-      {
-        while(return_status_byte != 1)
-        {
-          Dynamixel.move(ID, walking_gait_tripod[current_gait_position][id]);
-          delay(200);//
-          return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
-        }
+        Dynamixel.move(id, walking_gait_tripod[current_gait_position][id]);
+        delay(200);//
+        return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
       }
     }
+  }
 }
 
 // This fucntion specifically checks if a servo position is within 10% tolerance
 // of its commanded/assumed position.
 byte ten_percent_tolerance_check(int id, int position_to_be_checked)
 {
+  // Get the difference of the assumed and the current position to find the tolerance
+  diff = (float)abs(position_to_be_checked - Dynamixel.readPosition(id));
+  // create the value of tolerance based of the current assumed servo position.
+  current_tolerance = (float)position_to_be_checked*0.10;
 
-    diff = (float)abs(position_to_be_checked - Dynamixel.readPosition(id));
-    current_tolerance = (float)position_to_be_checked*0.10;
+  if (diff < current_tolerance)
+  {
+    //position is within 10% tolerance
+    return 1;
+  }
+  else
+  {
+    //position is out of 10% tolerance
+    return 0;
+  }
+}
 
-    if (diff < current_tolerance)
-    {
-      //position is within 10% tolerance
-      return 1;
-    }
-    else
-    {
-      //position is out of 10% tolerance
-      return 0;
-    }
+void setup_torque(int torque)
+{
+  for (id=0; id<18;id++)
+  {
+  Dynamixel.setMaxTorque(id,torque);
+  }
 }
 
 void setup()
 {
-    // have to send on master in, *slave out*
-    pinMode(MISO, OUTPUT);
+  // have to send on master in, *slave out*
+  pinMode(MISO, OUTPUT);
 
-    // turn on SPI in slave mode and attach the interrupt
-    SPCR |= _BV(SPE);
-    SPI.attachInterrupt();
-    Dynamixel.begin(1000000,2);  // Initialize the servo at 1Mbps and Pin Control 2
-    delay(1000);
-
-
-    //Serial.begin(9600);      // open the serial port at 9600 bps:
-
+  // turn on SPI in slave mode and attach the interrupt
+  SPCR |= _BV(SPE);
+  SPI.attachInterrupt();
+  Dynamixel.begin(1000000,2);  // Initialize the servo at 1Mbps and Pin Control 2
+  delay(2000);
+  setup_torque(torque_level);
+  Serial.begin(9600);
+  //default_walking_stance();
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop()
 {
+  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(500);                       // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+  delay(500); 
 
 }
