@@ -17,7 +17,7 @@
 	<!-- REW - Interfaces with fuel gauge -->
 	<node name="fuel_gauge" pkg="sigsent" type="fuel_gauge.py" respawn="false" />
 
-	<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
+	<!-- REW - Sends SPI messages to ATmega based on hexapod messages -->
 	<node name="pi_to_mcu" pkg="sigsent" type="spi_to_mcu.py" respawn="false" />
 
 	<!-- Joystick -->
