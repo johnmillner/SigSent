@@ -229,7 +229,7 @@ class TeleOp():
             self.walk_pub = rospy.Publisher('walk', Int8, queue_size=1)
         
         # Choose an upperbound for the twist value
-        self.speed = 0.5
+        self.speed = 1
 
         self.current_msg = None
 
@@ -269,6 +269,10 @@ class TeleOp():
         elif msg.angular.z < 0:
             direction = 2
 
+        # tells spi to stop sending
+        if self.mode == 1 and msg.linear.x == 0 and msg.angular.z == 0:
+            direction = 3
+
         # Driving mode
         if direction != None and self.mode == 0:
             d = Drive()
@@ -281,10 +285,6 @@ class TeleOp():
         elif direction != None and self.mode == 1:
             cmd = Int8()
             cmd.data = direction
-
-            # tells spi to stop sending
-            if msg.linear.x == 0 and msg.angular.z == 0:
-                cmd.data = 3
 
             self.walk_pub.publish(cmd)
 
