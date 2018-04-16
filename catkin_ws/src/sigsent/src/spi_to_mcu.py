@@ -100,6 +100,9 @@ class Spi:
     def __init__(self):
         rospy.init_node('spi_to_mcu')
         
+        self.drive_rate = rospy.Rate(20)
+        self.walk_rate = rospy.Rate(2)
+        self.rate = self.drive_rate
         self.mode = 0
 
         self.pi = pigpio.pi()
@@ -121,9 +124,11 @@ class Spi:
     def mode_cb(self, data):
         if data.data == 0:
             self.mode = 0
+            self.rate = self.drive_rate
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
         elif data.data == 1:
             self.mode = 1
+            self.rate = self.walk_rate
             self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
         
     def walk_cb(self, data):
@@ -154,8 +159,7 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
-        rate = rospy.Rate(2)
-
+        
         while not rospy.is_shutdown():
             # Driving mode
             if spi.mode == 0 and spi.current_msg != None:
@@ -167,6 +171,6 @@ if __name__ == '__main__':
                 print('Sent walk message')
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
 
-            rate.sleep()
+            spi.rate.sleep()
     except rospy.ROSInterruptException:
         pass
