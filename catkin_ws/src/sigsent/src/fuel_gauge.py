@@ -59,12 +59,12 @@ class FuelGauge:
         self.motor_pub = rospy.Publisher('drive', Drive, queue_size=10)
 
         # Read fuel gauge at 10Hz
-        self.read_freq = rospy.Rate(10)
+        self.read_freq = rospy.Rate(2)
         self.update()
 
     def update(self):
         try:
-            while True:
+            while not rospy.is_shutdown():
                 self.read_gauge()
                 self.read_freq.sleep()
         except rospy.ROSInterruptException:
