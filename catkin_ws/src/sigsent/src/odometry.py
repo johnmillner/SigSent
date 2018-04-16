@@ -12,7 +12,7 @@ class SigSentOdom:
         self.odom_pub = rospy.Publisher('odom', Odometry, queue_size=50)
         self.odom_broadcaster = tf.TransformBroadcaster()
 
-        self.vel_sub = rospy.Subscriber('cmd_vel', Twist, self.vel_cb, queue_size=50)
+        self.imu_sub = rospy.Subscriber('imu', Imu, self.imu_cb, queue_size=50)
         self.twist_velocity = None
 
         self.x = 0.0
@@ -22,9 +22,13 @@ class SigSentOdom:
         self.vy = 0.0
         self.vz = 0.0
         self.vth = 0.0
+        self.old_time = rospy.Time.now()
+        self.current_time = rospy.Time.now()
 
-    def vel_cb(self, vel_msg):
-        self.twist_velocity = vel_msg
+    def imu_cb(self, imu_msg):
+        dt = (self.current_time - self.old_time).to_sec()
+
+        velocity = (imu_msg.linear_acceleration.x * dt, imu_msg.linear_acceleration.y * dt, imu_msg.linear_acceleration.z * dt)
 
         self.vx = vel_msg.linear.x
         self.vy = vel_msg.linear.y

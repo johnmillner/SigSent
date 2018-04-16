@@ -27,7 +27,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 
 roslib.load_manifest('sigsent')
 
-from sigsent.msg import GPSList, Battery
+from sigsent.msg import GPSList, Battery, Drive
 
 # IMPORTANT
 # To connect Python to Google Maps Js/HTML, follow this:
@@ -220,12 +220,16 @@ class TeleOp():
     # rosrun joy joy_node
     # Add these to launch files so they launch with sigsent local.launch items
     def __init__(self):
+        # Driving mode is mode 0
+        self.mode = 0
+
         if ROS:
             self.joy_sub = rospy.Subscriber('joy_throttle', Joy, self.joy_cb, queue_size=10)
-            self.teleop_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
+            self.drive_pub = rospy.Publisher('drive', Drive, queue_size=1)
+            self.walk_pub = rospy.Publisher('walk', Int8, queue_size=1)
         
         # Choose an upperbound for the twist value
-        self.speed = 2
+        self.speed = 0.5
 
         self.teleop_enabled = False
         self.checkbox = QCheckBox('Enable TeleOp')
@@ -238,8 +242,10 @@ class TeleOp():
     def joy_cb(self, data):
         if not self.teleop_enabled:
             return
-            
+
         msg = Twist()
+
+        direction = None
 
         # Joystick state is published to /joy, need to test joystick for correct inputs
         # Using those inputs, create a Twist() message here to send to the teleop node
@@ -247,8 +253,31 @@ class TeleOp():
         # axes: [-0.0, -0.0, -0.0, 0.0, 0.0, 0.0]
         msg.linear.x = self.speed * data.axes[1]
         msg.angular.z = self.speed * data.axes[2]
+
+        # Forward
+        if msg.linear.x > 0:
+            direction = 0
+        elif msg.linear.x < 0:
+            direction = 3
+        elif msg.angular.z > 0:
+            direction = 1
+        elif msg.angular.z < 0:
+            direction = 2
         
-        self.teleop_pub.publish(msg)
+        # Driving mode
+        if direction != None and self.mode == 0:
+            d = Drive()
+            d.direction.data = direction
+            d.speed.data = self.speed * max(abs(msg.linear.x), abs(msg.angular.z))
+
+            self.drive_pub.publish(d)
+
+        # Walking mode
+        elif direction != None and self.mode == 1:
+            cmd = Int8()
+            cmd.data = direction
+
+            self.walk_pub.publish(cmd)
 
       
 class Maps(QObject):
@@ -400,7 +429,8 @@ class FuelGauge:
 
         
 class MovementMode:
-    def __init__(self, label, button):
+    def __init__(self, label, button, tp):
+        self.tp = tp
         self.label = label
         self.button = button
         self.mode_pub = rospy.Publisher('mode', Int8, queue_size=10)
@@ -423,6 +453,7 @@ class MovementMode:
         elif self.current_mode == 1:
             self.label.setText('Walking mode')
 
+        self.tp.mode = self.current_mode
       
 class VoiceControl:
     def __init__(self):
@@ -490,7 +521,7 @@ class Basestation(QMainWindow, Ui_MainWindow):
 
         self.fg = FuelGauge(self.battery_bar, self.voltage_label, self.current_label, self.temperature_label)
 
-        self.mode_changer = MovementMode(self.current_mode_label, self.switch_mode_button)
+        self.mode_changer = MovementMode(self.current_mode_label, self.switch_mode_button, self.teleop)
 
         self.vc = VoiceControl()
         self.user_tools.insertWidget(3, self.vc.vc_checkbox)

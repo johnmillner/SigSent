@@ -108,10 +108,10 @@ class Spi:
         self.message_gen = Message()
 
         # Subscribers and their SPI callbacks here
-        self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb)
-        self.walking_sub = rospy.Subscriber('walk', Int8, self.walk_cb)
-        self.drive_sub = rospy.Subscriber('drive', Drive, self.drive_cb)
-
+        self.mode_sub = rospy.Subscriber('mode', Int8, self.mode_cb, queue_size=1)
+        self.walking_sub = rospy.Subscriber('walk', Int8, self.walk_cb, queue_size=1)
+        self.drive_sub = rospy.Subscriber('drive', Drive, self.drive_cb, queue_size=1)
+        
         self.direction_list = [False] * 4
 
     def mode_cb(self, data):

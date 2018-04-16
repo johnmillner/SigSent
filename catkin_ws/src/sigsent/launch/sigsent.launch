@@ -13,14 +13,21 @@
   <arg name="_wavpath" value="_wavpath:=none" />
   <node name="pocketsphinx_recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen" args="$(arg _dict) $(arg _kws) $(arg _stream) $(arg _wavpath)" />
 
-	<!-- Joystick 
+
+	<!-- REW - Interfaces with fuel gauge -->
+	<node name="fuel_gauge" pkg="sigsent" type="fuel_gauge.py" respawn="false" />
+
+	<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
+	<node name="pi_to_mcu" pkg="sigsent" type="spi_to_mcu.py" respawn="false" />
+
+	<!-- Joystick -->
 	<node respawn="false" pkg="joy" type="joy_node" name="joy" >
         <param name="dev" type="string" value="/dev/input/js0" />
         <param name="deadzone" value="0.05" />
-    </node>-->
+    </node>
 
 	<!-- Joystick Throttle -->
-	<node name="joystick_throttler" type="throttle" pkg="topic_tools" args="messages /joy 30 /joy_throttle" />
+	<node name="joystick_throttler" type="throttle" pkg="topic_tools" args="messages /joy 5 /joy_throttle" />
 
 	<!-- GPS goal -->
 	<!--
