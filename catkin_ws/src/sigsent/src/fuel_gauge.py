@@ -77,7 +77,7 @@ class FuelGauge:
                 accum_charge_readings = bus.read_i2c_block_data(self.address, self.accum_charge_reg, 2)
                 current_readings = bus.read_i2c_block_data(self.address, self.current_reg, 2)
                 temperature_readings = bus.read_i2c_block_data(self.address, self.temperature_reg, 2)
-        except e:
+        except Exception as e:
             print('Error: {}'.format(e))
             sys.exit()
         
@@ -85,43 +85,41 @@ class FuelGauge:
         accum_charge = accum_charge_readings[0] << 8 | accum_charge_readings[1]
         current = current_readings[0] << 8 | current_readings[1]
         temperature = temperature_readings[0] << 8 | temperature_readings[1]
-
         voltage = self.code_to_voltage(voltage)
         accum_charge = self.code_to_mAh(accum_charge)
         current = self.code_to_current(current)
         temperature = self.code_to_celcius(temperature)
-
+	
         battery = Battery()
-        battery.voltage = voltage
-        battery.charge = accum_charge
-        battery.current = current
-        battery.temperature = temperature
-        battery.percent_full = min(100, accum_charge/self.max_cap)
-
+        battery.voltage.data = voltage
+        battery.charge.data = accum_charge
+        battery.current.data = current
+        battery.temperature.data = temperature
+        battery.percent_full.data = min(100, accum_charge/self.max_cap)
         # Turn off the motors if current too high
-        if current > self.current_th_hi:
+	if current < self.current_th_hi:
             d_msg = Drive()
             d_msg.direction.data = 0
             d_msg.speed.data = 0
             self.motor_pub.publish(d_msg)
-
         self.battery_pub.publish(battery)
-
     # The conversions defined below come from the provided Linduino code by Linear
     def code_to_mAh(self, data):
         return 1000 * (data * self.LTC2943_CHARGE_lsb * 16 *50E-3)/(self.resistor * 4096)
     
     def code_to_current(self, data):
-        return ((data - 32767) / (32767)) * ((self.LTC2943_FULLSCALE_CURRENT) / self.resistor)
+        return ((float(data) - 32767) / (32767)) * ((self.LTC2943_FULLSCALE_CURRENT) / self.resistor)
     
     def code_to_celcius(self, data):
         return data * ((self.LTC2943_FULLSCALE_TEMPERATURE) / 65535) - 273.15
 
     def code_to_voltage(self, data):
-        return (data / (65535)) * self.LTC2943_FULLSCALE_VOLTAGE
+        return (float(data) / (65535)) * self.LTC2943_FULLSCALE_VOLTAGE
 
 if __name__ == '__main__':
     try:
+	rospy.init_node('fuel_gauge')
         fg = FuelGauge()
-    except:
+    except Exception as e:
+	print(e)
         pass        
