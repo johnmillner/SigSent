@@ -81,10 +81,10 @@ class FuelGauge:
             print('Error: {}'.format(e))
             sys.exit()
         
-        voltage = int.from_bytes(voltage_readings, byteorder='big')
-        accum_charge = int.from_bytes(accum_charge_readings, byteorder='big')
-        current = int.from_bytes(current_readings, byteorder='big')
-        temperature = int.from_bytes(temperature_readings, byteorder='big')
+        voltage = voltage_readings[0] << 8 | voltage_readings[1]
+        accum_charge = accum_charge_readings[0] << 8 | accum_charge_readings[1]
+        current = current_readings[0] << 8 | current_readings[1]
+        temperature = temperature_readings[0] << 8 | temperature_readings[1]
 
         voltage = self.code_to_voltage(voltage)
         accum_charge = self.code_to_mAh(accum_charge)
