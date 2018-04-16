@@ -162,6 +162,7 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
+        spi_wait = rospy.Rate(100)
 
         waiting = False
         while not rospy.is_shutdown():
@@ -171,7 +172,9 @@ if __name__ == '__main__':
                 
                 if rx_data[0] == 0b11111111:
                     waiting = False
-
+                print('Waiting?: {}'.format(waiting))
+                spi_wait.sleep()
+                
             # Driving mode
             elif spi.mode == 0 and spi.current_msg != None:
                 #print('Sent drive message')
@@ -184,7 +187,6 @@ if __name__ == '__main__':
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
                 waiting = True
             
-            #spi.rate.sleep()
 
     except rospy.ROSInterruptException:
         spi.pi.spi_close(spi.pi.spi)
