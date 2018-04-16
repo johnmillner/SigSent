@@ -1,8 +1,10 @@
+#!/usr/bin/python
 from smbus2 import SMBusWrapper
 import time
 import sys
 import rospy
 import roslib
+from std_msgs.msg import Float32
 from sigsent.msg import GPSList, Battery, Drive
 
 roslib.load_manifest('sigsent')
@@ -51,19 +53,23 @@ class FuelGauge:
         
         # Set control bits and thresholds
         with SMBusWrapper(1) as bus:
-            bus.write_i2c_block_data(self.address, self.control_reg, self.control)
-            bus.write_i2c_block_data(self.address, self.voltage_th_hi, self.)
+            bus.write_byte_data(self.address, self.control_reg, self.control)
+            #bus.write_i2c_block_data(self.address, self.voltage_th_hi, self.voltage_th_hi_reg)
 
         self.battery_pub = rospy.Publisher('battery', Battery, queue_size=10)
         self.motor_pub = rospy.Publisher('drive', Drive, queue_size=10)
+        self.resistor_sub = rospy.Subscriber('resistor', Float32, self.resistor_cb, queue_size=10)
 
         # Read fuel gauge at 10Hz
-        self.read_freq = rospy.Rate(10)
+        self.read_freq = rospy.Rate(2)
         self.update()
+
+    def resistor_cb(self, msg):
+        self.resistor = msg.data
 
     def update(self):
         try:
-            while True:
+            while not rospy.is_shutdown():
                 self.read_gauge()
                 self.read_freq.sleep()
         except rospy.ROSInterruptException:
