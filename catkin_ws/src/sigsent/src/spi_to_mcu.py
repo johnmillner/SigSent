@@ -152,16 +152,19 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
+        rate = rospy.Rate(2)
 
         while not rospy.is_shutdown():
             # Driving mode
             if spi.mode == 0 and spi.current_msg != None:
-                self.pi.spi_xfer(self.spi, self.current_msg)
+                print('Sent drive message')
+                spi.pi.spi_xfer(spi.spi, spi.current_msg)
 
             # Walking mode
             elif spi.mode == 1  and spi.current_msg != None:
-                self.pi.spi_xfer(self.spi, self.current_msg)        
+                print('Sent walk message')
+                spi.pi.spi_xfer(spi.spi, spi.current_msg)        
 
-            self.rate.sleep()
+            rate.sleep()
     except rospy.ROSInterruptException:
         pass
