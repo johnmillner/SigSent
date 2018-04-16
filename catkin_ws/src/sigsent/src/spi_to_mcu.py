@@ -132,6 +132,7 @@ class Spi:
 
         if data.data == 3:
             self.current_msg = None
+            return
 
         directions = list(self.direction_list)
         directions[data.data] = True
@@ -143,6 +144,7 @@ class Spi:
 
         if data.speed.data == 0:
             self.current_msg = None
+            return
 
         directions = list(self.direction_list)
         directions[data.direction.data] = True
