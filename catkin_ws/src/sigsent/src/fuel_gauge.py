@@ -84,7 +84,6 @@ class FuelGauge:
         accum_charge = accum_charge_readings[0] << 8 | accum_charge_readings[1]
         current = current_readings[0] << 8 | current_readings[1]
         temperature = temperature_readings[0] << 8 | temperature_readings[1]
-
         voltage = self.code_to_voltage(voltage)
         accum_charge = self.code_to_mAh(accum_charge)
         current = self.code_to_current(current)
