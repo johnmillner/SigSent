@@ -5,14 +5,6 @@
 
 <launch>
     <!-- put nodes meant to run on the basestation computer here -->
-
-
-    <arg name="_dict" value="_dict:=$(find pocketsphinx)/vocab/voice_cmd.dic" />
-    <arg name="_kws" value="_kws:=$(find pocketsphinx)/vocab/voice_cmd.kwlist" />
-    <arg name="_stream" value="_stream:=true" />
-    <arg name="_wavpath" value="_wavpath:=none" />
-    <node name="pocketsphinx_recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen" args="$(arg _dict) $(arg _kws) $(arg _stream) $(arg _wavpath)" />
-
     <!-- Joystick 
     <node respawn="false" pkg="joy" type="joy_node" name="joy" >
         <param name="dev" type="string" value="/dev/input/js0" />
@@ -29,13 +21,13 @@
     -->
 
     <!-- Unscented Kalman Filter for odometry - fuses IMU and GPS -->
-    <node name="$(anon ukf)" pkg="robot_localization" type="ukf_localization_node" output="screen">
+    <node name="ukf" pkg="robot_localization" type="ukf_localization_node" output="screen">
         <rosparam file="$(find sigsent)params/ukf.yaml" command="load"/>
         <remap from="odometry/filtered" to="odom"/>
     </node>
 
     <!-- Transforms GPS into usable data for UKF -->
-    <node name="$(anon navSat_transform)" pkg="robot_localization" type="navsat_transform_node" output="screen">
+    <node name="navSat_transform" pkg="robot_localization" type="navsat_transform_node" output="screen">
         <remap from="/imu/data" to="imu" />
         <remap from="/gps/fix" to="fix" />
         <remap from="/odometry/filtered" to="odom" />
@@ -57,15 +49,6 @@
     <!-- RVIZ -->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sigsent)/rviz/sigsent.rviz"/>
 
-    <!-- Audio -->
-    <node name="basestation_audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
-        <remap from="audio" to="basestation_audio"/>
-    </node>
-    <node name="basestation_audio_play" pkg="audio_play" type="audio_play" output="screen">
-        <remap from="audio" to="sigsent_audio"/>
-    </node>
-
-
 
 	<group>
 		<!-- info to run nodes on sigsent-->
@@ -84,7 +67,8 @@
 		    <param name="port" type="string" value="/dev/ttyS0" />
 		    <param name="baud" type="int" value="115200" />
 		</node>
-	
+	    
+	    <!--
 		<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
 			<param name="video_device" value="/dev/video0" />
 			<param name="image_width" value="640" />
@@ -92,7 +76,7 @@
 			<param name="pixel_format" value="yuyv" />
 			<param name="camera_frame_id" value="usb_cam" />
 			<param name="io_method" value="mmap"/>
-		</node>
+		</node>-->
     
 	    <!-- Hokuyo UTM-30lx LIDAR -->
 		<node name="lidar" pkg="urg_node" type="urg_node" respawn="true" output="screen">
@@ -105,17 +89,7 @@
 		    <param name="frame_id" value="base_link"/>
 		</node>
 		
-		<!-- REW - Enables/disables lightbar by writing out GPIO pin connected to it's MOSFET -->
-        <node name="lightbar" pkg="sigsent" type="lightbar.py" respawn="false" />
-        
-        <!-- Audio -->
-        <node name="sigsent_audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
-            <remap from="audio" to="sigsent_audio"/>
-        </node>
-
-        <node name="sigsent_audio_play" pkg="audio_play" type="audio_play" output="screen">
-            <remap from="audio" to="basestation_audio"/>
-        </node>
+	
     </group>
 
 </launch>
