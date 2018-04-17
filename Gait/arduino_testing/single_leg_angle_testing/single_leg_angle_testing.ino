@@ -1,6 +1,7 @@
 #include <ESC.h>
 #include <SPI.h>
-#include <DynamixelSerial3.h>
+#include "Arduino.h"
+#include "AX12A.h"
 #include <Servo.h>
 
 int torque_level = 1023; //sets torque to ~90% as default
@@ -9,7 +10,14 @@ byte mtr1_pin, mtr2_pin, mtr3_pin, mtr4_pin;
 
 ESC mtr1(mtr1_pin, 1148, 1832, 1500), mtr2(mtr2_pin, 1148, 1832, 1500), mtr3(mtr3_pin, 1148, 1832, 1500), mtr4(mtr4_pin, 1148, 1832, 1500);
 ESC motors[] = {mtr1, mtr2, mtr3, mtr4};
-
+int walking_gait_tripod[][18] = {
+                      {512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512},
+                      {512, 596, 324, 512, 426, 512, 512, 426, 700, 512, 596, 550, 512, 596, 324, 512, 426, 512},
+                      {512, 596, 324, 512, 426, 512, 650, 426, 700, 512, 596, 550, 275, 596, 324, 512, 426, 512},
+                      {512, 596, 512, 512, 426, 512, 650, 426, 474, 512, 596, 550, 275, 596, 512, 512, 426, 512},
+                      {512, 596, 512, 512, 426, 512, 374, 426, 474, 512, 596, 550, 650, 596, 512, 512, 426, 512}
+                      };
+                      
 volatile byte marker;
   
 // This flag is true if we are executing a command
@@ -50,8 +58,7 @@ void setup_torque(int torque)
   int id;
   for (id=0; id<18;id++)
   {
-   Dynamixel.setMaxTorque(id,torque);
-   Dynamixel.setPunch(id, 920);
+   ax12a.setMaxTorque(id, 1023);
   }
 }
 
@@ -71,8 +78,10 @@ void setup()
     SPCR |= _BV(SPIE);
 
     SPI.setDataMode(SPI_MODE0);
+    
     marker = 0;
-    Dynamixel.begin(1000000,2);
+    
+    ax12a.begin(1000000, 2, &Serial3);
     Serial.begin(115200);
     command = -1;
     setup_torque(torque_level);
@@ -102,7 +111,7 @@ void loop()
       Serial.print(position);
       
       
-      Dynamixel.move(id, position);  
+      ax12a.move(id, position);  
     }
 
     if (command == 30)
@@ -112,10 +121,10 @@ void loop()
       Serial.print(" to new ID ");
       Serial.println(position);
       // Assign new ID, ignore the shitty naming conventions
-      Dynamixel.setID(id, position);
+      ax12a.setID(id, position);
 
       // Test moving to a random val to see if assigning worked
-      Dynamixel.move(position, random(400, 601));   
+      ax12a.move(position, random(400, 601));
     }
 
    if (command == 40)
