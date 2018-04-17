@@ -8,8 +8,8 @@
  *
  *
  *Walking mode angles
- *0 512 1 426 2 512 3 512 4 596 5 512 6 512 7 596 8 512 9 512 10 426 11 512 12 512 13 426 14 512 15 512 16 596 17 512
- *512 426 512 512 596 512 512 596 512 512 426 512 512 426 512 512 596 512
+ *0 512 1 596 2 512 3 512 4 426 5 512 6 512 7 426 8 512 9 512 10 596 11 512 12 512 13 596 14 512 15 512 16 426 17 512
+ *512 596 512 512 426 512 512 426 512 512 596 512 512 596 512 512 426 512
  *
  *Drive mode angles
  *0 358 1 426 2 512 3 664 4 596 5 512 6 512 7 700 8 200 9 512 10 323 11 825 12 664 13 426 14 512 15 358 16 596 17 512
@@ -35,6 +35,7 @@
 #include <SPI.h>
 #include <DynamixelSerial3.h>
 
+int torque_level = 920; //sets torque to ~90% as default
 
 
 // This flag is true if we are executing a command
@@ -230,7 +231,7 @@ ISR (SPI_STC_vect)
 
     //Serial.print("Received: ");
 
-    // 10101010 will be an alert pi sends to MCU when it has the OK
+    // 10101010 will be an alert pi sends to MCU when it has the OK 
     // to send a command. Tells MCU to expect a message header
 
     
@@ -363,8 +364,15 @@ void reset_messages()
       message_data[i] = -1;
 }
 
-void setup() 
+void setup_torque(int torque)
+{
+  for (id=0; id<18;id++)
+  {
+   Dynamixel.setMaxTorque(id,torque);
+  }
+}
 
+void setup() 
 {
     Serial.begin(9600);
     // have to send on master in, *slave out*
@@ -375,9 +383,13 @@ void setup()
     SPCR |= _BV(SPIE);
 
     SPI.setDataMode(SPI_MODE0);
+
+    Dynamixel.begin(1000000, 2);
+    setup_torque(torque_level);
+
 }
 
-void loop()
+void loop() 
 {
 
     while(!doing_command)
@@ -417,7 +429,6 @@ void loop()
                 receiving_esc_direction = 1;
             
             message_data[0] = -1;
-
         }
     }
 
