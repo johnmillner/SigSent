@@ -35,6 +35,8 @@
 #include <SPI.h>
 #include <DynamixelSerial3.h>
 
+
+
 // This flag is true if we are executing a command
 byte doing_command = 0;
 byte message_data = -1;
@@ -206,7 +208,7 @@ ISR (SPI_STC_vect)
 
     //Serial.print("Received: ");
 
-    // 10101010 will be an alert pi sends to MCU when it has the OK 
+    // 10101010 will be an alert pi sends to MCU when it has the OK
     // to send a command. Tells MCU to expect a message header
     if (message_data == 0b10101010)
     {
@@ -320,7 +322,7 @@ void setup_torque(int torque)
   Dynamixel.setMaxTorque(id,torque);
   }
 }
-void setup() 
+void setup()
 {
     // have to send on master in, *slave out*
     pinMode(MISO, OUTPUT);
@@ -332,7 +334,7 @@ void setup()
     SPI.setDataMode(SPI_MODE0);
 }
 
-void loop() 
+void loop()
 {
 
     while(!doing_command)
@@ -368,7 +370,7 @@ void loop()
                 receiving_walking_move = 1;
             else if (message_type == ESC_TYPE)
                 receiving_esc_direction = 1;
-            
+
             message_data = -1;
         }
     }
