@@ -1,7 +1,12 @@
-
-
+#include <ESC.h>
 #include <SPI.h>
 #include <DynamixelSerial3.h>
+#include <Servo.h>
+
+byte mtr1_pin, mtr2_pin, mtr3_pin, mtr4_pin;
+
+ESC mtr1(), mtr2, mtr3, mtr4;
+ESC motors[] = {mtr1, mtr2, mtr3, mtr4};
 
 volatile byte marker;
   
@@ -40,6 +45,12 @@ ISR (SPI_STC_vect)
 
 void setup()
 {
+
+    mtr1.attach(10, 1200, 1800);
+    mtr2.attach(11, 1200, 1800);
+    mtr3.attach(12, 1200, 1800);
+    mtr4.attach(13, 1200, 1800);
+  
     // have to send on master in, *slave out*
     pinMode(MISO, OUTPUT);
 
@@ -93,6 +104,12 @@ void loop()
       // Test moving to a random val to see if assigning worked
       Dynamixel.move(position, random(400, 601));   
     }
+
+   if (command == 40)
+   {
+      motors[id].write(position);
+   }
+    
     command = -1;
     marker = 0;
 }
