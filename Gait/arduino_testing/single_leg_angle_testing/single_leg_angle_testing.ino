@@ -3,6 +3,8 @@
 #include <DynamixelSerial3.h>
 #include <Servo.h>
 
+int torque_level = 1023; //sets torque to ~90% as default
+
 byte mtr1_pin, mtr2_pin, mtr3_pin, mtr4_pin;
 
 ESC mtr1(mtr1_pin, 1148, 1832, 1500), mtr2(mtr2_pin, 1148, 1832, 1500), mtr3(mtr3_pin, 1148, 1832, 1500), mtr4(mtr4_pin, 1148, 1832, 1500);
@@ -43,6 +45,16 @@ ISR (SPI_STC_vect)
      
   }
 
+void setup_torque(int torque)
+{
+  int id;
+  for (id=0; id<18;id++)
+  {
+   Dynamixel.setMaxTorque(id,torque);
+   Dynamixel.setPunch(id, 920);
+  }
+}
+
 void setup()
 {
 
@@ -63,6 +75,7 @@ void setup()
     Dynamixel.begin(1000000,2);
     Serial.begin(115200);
     command = -1;
+    setup_torque(torque_level);
 }
 
 void loop()
@@ -107,7 +120,7 @@ void loop()
 
    if (command == 40)
    {
-      motors[id].write(position);
+      //motors[id].speed(position);
    }
     
     command = -1;

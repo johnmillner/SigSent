@@ -35,7 +35,7 @@
 #include <SPI.h>
 #include <DynamixelSerial3.h>
 
-int torque_level = 920; //sets torque to ~90% as default
+int torque_level = 1023; //sets torque to ~90% as default
 
 
 // This flag is true if we are executing a command
@@ -87,7 +87,6 @@ byte ready_flag = 0;
 byte return_status_byte = 0; //used when returning from a function for status of its execution
 int id = 0; //general id variable for storing servo IDs
 int counter= 0; //general counter
-int torque_level = 920; //sets torque to ~90% as default
 float diff = 0;
 float tolerance = 0.1;
 float current_tolerance = 0;
@@ -362,14 +361,6 @@ void reset_messages()
     next_msg = 0;
     for (int i = 0; i < 10; i++)
       message_data[i] = -1;
-}
-
-void setup_torque(int torque)
-{
-  for (id=0; id<18;id++)
-  {
-   Dynamixel.setMaxTorque(id,torque);
-  }
 }
 
 void setup() 
