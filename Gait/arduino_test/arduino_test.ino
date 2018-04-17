@@ -35,6 +35,8 @@
 #include <SPI.h>
 #include <DynamixelSerial3.h>
 
+
+
 // This flag is true if we are executing a command
 byte doing_command = 0;
 byte message_data[10] = {0};
@@ -228,7 +230,7 @@ ISR (SPI_STC_vect)
 
     //Serial.print("Received: ");
 
-    // 10101010 will be an alert pi sends to MCU when it has the OK 
+    // 10101010 will be an alert pi sends to MCU when it has the OK
     // to send a command. Tells MCU to expect a message header
 
     
@@ -362,6 +364,7 @@ void reset_messages()
 }
 
 void setup() 
+
 {
     Serial.begin(9600);
     // have to send on master in, *slave out*
@@ -374,7 +377,7 @@ void setup()
     SPI.setDataMode(SPI_MODE0);
 }
 
-void loop() 
+void loop()
 {
 
     while(!doing_command)
@@ -414,6 +417,7 @@ void loop()
                 receiving_esc_direction = 1;
             
             message_data[0] = -1;
+
         }
     }
 
