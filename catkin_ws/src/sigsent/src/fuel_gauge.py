@@ -1,8 +1,10 @@
+#!/usr/bin/python
 from smbus2 import SMBusWrapper
 import time
 import sys
 import rospy
 import roslib
+from std_msgs.msg import Float32
 from sigsent.msg import GPSList, Battery, Drive
 
 roslib.load_manifest('sigsent')
@@ -51,19 +53,23 @@ class FuelGauge:
         
         # Set control bits and thresholds
         with SMBusWrapper(1) as bus:
-            bus.write_i2c_block_data(self.address, self.control_reg, self.control)
-            bus.write_i2c_block_data(self.address, self.voltage_th_hi, self.)
+            bus.write_byte_data(self.address, self.control_reg, self.control)
+            #bus.write_i2c_block_data(self.address, self.voltage_th_hi, self.voltage_th_hi_reg)
 
         self.battery_pub = rospy.Publisher('battery', Battery, queue_size=10)
         self.motor_pub = rospy.Publisher('drive', Drive, queue_size=10)
+        self.resistor_sub = rospy.Subscriber('resistor', Float32, self.resistor_cb, queue_size=10)
 
         # Read fuel gauge at 10Hz
-        self.read_freq = rospy.Rate(10)
+        self.read_freq = rospy.Rate(2)
         self.update()
+
+    def resistor_cb(self, msg):
+        self.resistor = msg.data
 
     def update(self):
         try:
-            while True:
+            while not rospy.is_shutdown():
                 self.read_gauge()
                 self.read_freq.sleep()
         except rospy.ROSInterruptException:
@@ -76,51 +82,49 @@ class FuelGauge:
                 accum_charge_readings = bus.read_i2c_block_data(self.address, self.accum_charge_reg, 2)
                 current_readings = bus.read_i2c_block_data(self.address, self.current_reg, 2)
                 temperature_readings = bus.read_i2c_block_data(self.address, self.temperature_reg, 2)
-        except e:
+        except Exception as e:
             print('Error: {}'.format(e))
             sys.exit()
         
-        voltage = int.from_bytes(voltage_readings, byteorder='big')
-        accum_charge = int.from_bytes(accum_charge_readings, byteorder='big')
-        current = int.from_bytes(current_readings, byteorder='big')
-        temperature = int.from_bytes(temperature_readings, byteorder='big')
-
+        voltage = voltage_readings[0] << 8 | voltage_readings[1]
+        accum_charge = accum_charge_readings[0] << 8 | accum_charge_readings[1]
+        current = current_readings[0] << 8 | current_readings[1]
+        temperature = temperature_readings[0] << 8 | temperature_readings[1]
         voltage = self.code_to_voltage(voltage)
         accum_charge = self.code_to_mAh(accum_charge)
         current = self.code_to_current(current)
         temperature = self.code_to_celcius(temperature)
-
+	
         battery = Battery()
-        battery.voltage = voltage
-        battery.charge = accum_charge
-        battery.current = current
-        battery.temperature = temperature
-        battery.percent_full = min(100, accum_charge/self.max_cap)
-
+        battery.voltage.data = voltage
+        battery.charge.data = accum_charge
+        battery.current.data = current
+        battery.temperature.data = temperature
+        battery.percent_full.data = min(100, accum_charge/self.max_cap)
         # Turn off the motors if current too high
-        if current > self.current_th_hi:
+	if current < self.current_th_hi:
             d_msg = Drive()
             d_msg.direction.data = 0
             d_msg.speed.data = 0
             self.motor_pub.publish(d_msg)
-
         self.battery_pub.publish(battery)
-
     # The conversions defined below come from the provided Linduino code by Linear
     def code_to_mAh(self, data):
         return 1000 * (data * self.LTC2943_CHARGE_lsb * 16 *50E-3)/(self.resistor * 4096)
     
     def code_to_current(self, data):
-        return ((data - 32767) / (32767)) * ((self.LTC2943_FULLSCALE_CURRENT) / self.resistor)
+        return ((float(data) - 32767) / (32767)) * ((self.LTC2943_FULLSCALE_CURRENT) / self.resistor)
     
     def code_to_celcius(self, data):
         return data * ((self.LTC2943_FULLSCALE_TEMPERATURE) / 65535) - 273.15
 
     def code_to_voltage(self, data):
-        return (data / (65535)) * self.LTC2943_FULLSCALE_VOLTAGE
+        return (float(data) / (65535)) * self.LTC2943_FULLSCALE_VOLTAGE
 
 if __name__ == '__main__':
     try:
+	rospy.init_node('fuel_gauge')
         fg = FuelGauge()
-    except:
+    except Exception as e:
+	print(e)
         pass        
