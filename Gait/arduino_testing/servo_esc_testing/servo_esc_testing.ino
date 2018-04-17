@@ -3,9 +3,12 @@
 #include <DynamixelSerial3.h>
 #include <Servo.h>
 
-byte mtr1_pin, mtr2_pin, mtr3_pin, mtr4_pin;
+byte mtr1_pin = 10, mtr2_pin = 11, mtr3_pin = 12, mtr4_pin = 13;
+int low = 1148;
+int high = 1832;
+int arm_value = 1200;
 
-ESC mtr1(mtr1_pin, 1148, 1832, 1500), mtr2(mtr2_pin, 1148, 1832, 1500), mtr3(mtr3_pin, 1148, 1832, 1500), mtr4(mtr4_pin, 1148, 1832, 1500);
+ESC mtr1(mtr1_pin, low, high, arm_value), mtr2(mtr2_pin, low, high, arm_value), mtr3(mtr3_pin, low, high, arm_value), mtr4(mtr4_pin, low, high, arm_value);
 ESC motors[] = {mtr1, mtr2, mtr3, mtr4};
 
 volatile byte marker;
@@ -107,7 +110,8 @@ void loop()
 
    if (command == 40)
    {
-      motors[id].write(position);
+      int speed = map(position, 0, 255, low, high);
+      motors[id].speed(speed);
    }
     
     command = -1;
