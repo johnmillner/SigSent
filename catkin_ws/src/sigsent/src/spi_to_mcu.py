@@ -136,8 +136,12 @@ class Spi:
             self.pi.spi_xfer(self.spi, [30])
         
     def walk_cb(self, data):
+        
         if data.data < 0 or data.data > 4:
             return
+        
+        directions = list(self.direction_list)
+        directions[data.data] = True
 
         if data.data == 3:
             self.current_msg = None
@@ -148,8 +152,7 @@ class Spi:
             self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])    
             return
 
-        directions = list(self.direction_list)
-        directions[data.data] = True
+        
         self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
 	print('walk message rcv') 
     def drive_cb(self, data):
