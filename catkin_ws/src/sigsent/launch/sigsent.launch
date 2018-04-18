@@ -85,6 +85,8 @@
 		    <remap from="data" to="imu" />
 		</node>
 
+		<node name="enableFG" pkg="sigsent" type="enableFG.py" output="screen"/>
+
 		<!-- Sparkfun Venus638FLPx -->
 		<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" output="screen">
 		    <param name="port" type="string" value="/dev/ttyS0" />
