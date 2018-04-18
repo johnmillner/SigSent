@@ -171,7 +171,7 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
-        spi_wait = rospy.Rate(10)
+        spi_wait = rospy.Rate(1)
 
         waiting = True
         while not rospy.is_shutdown():
@@ -188,6 +188,6 @@ if __name__ == '__main__':
                 spi.pi.spi_xfer(spi.spi, [10])        
                 spi.current_msg = None 
                 spi_wait.sleep()
-                
+
     except rospy.ROSInterruptException:
         spi.pi.spi_close(spi.pi.spi)
