@@ -143,7 +143,7 @@ class Spi:
             self.current_msg = None
             return
 
-        if data.data == 1:
+        if data.data == 2:
             self.turn_right = True
             self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])    
             return
