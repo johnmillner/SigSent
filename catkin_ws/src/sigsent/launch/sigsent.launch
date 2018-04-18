@@ -12,13 +12,6 @@
   <arg name="_wavpath" value="_wavpath:=none" />
   <node name="pocketsphinx_recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen" args="$(arg _dict) $(arg _kws) $(arg _stream) $(arg _wavpath)" />
 
-
-	<!-- REW - Interfaces with fuel gauge -->
-	<node name="fuel_gauge" pkg="sigsent" type="fuel_gauge.py" respawn="false" />
-
-	<!-- REW - Sends SPI messages to ATmega based on hexapod messages -->
-	<node name="pi_to_mcu" pkg="sigsent" type="spi_to_mcu.py" respawn="false" />
-
 	<!-- Joystick -->
 	<node respawn="false" pkg="joy" type="joy_node" name="joy" >
         <param name="dev" type="string" value="/dev/input/js0" />
@@ -86,6 +79,12 @@
 		</node>
 
 		<node name="enableFG" pkg="sigsent" type="enableFG.py" output="screen"/>
+
+		<!-- REW - Interfaces with fuel gauge -->
+		<node name="fuel_gauge" pkg="sigsent" type="fuel_gauge.py" respawn="false" />
+
+		<!-- REW - Sends SPI messages to ATmega based on hexapod messages -->
+		<node name="pi_to_mcu" pkg="sigsent" type="spi_to_mcu.py" respawn="false" />
 
 		<!-- Sparkfun Venus638FLPx -->
 		<node name="gps" pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" output="screen">
