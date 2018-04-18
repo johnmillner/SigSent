@@ -146,7 +146,7 @@ class Spi:
         directions = list(self.direction_list)
         directions[data.data] = True
         self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
-        
+	print('walk message rcv') 
     def drive_cb(self, data):
         if data.direction.data < 0 or data.direction.data > 3:
             return
@@ -167,25 +167,11 @@ if __name__ == '__main__':
 
         waiting = True
         while not rospy.is_shutdown():
-            if waiting == True:
-                count, rx_data = spi.pi.spi_xfer(spi.spi, [spi.status_req])
-                print('waiting')
-		print(rx_data[0])
-                if rx_data[0] == 0b11111111:
-                    waiting = False
-                spi_wait.sleep()
-            # Driving mode
-            elif spi.mode == 0 and spi.current_msg != None:
-                print('Sent drive message')
-                spi.pi.spi_xfer(spi.spi, spi.current_msg)
-                waiting = True
-                spi.current_msg = None 
             # Walking mode
-            elif spi.mode == 1  and spi.current_msg != None:
+            if spi.current_msg != None:
                 print('Sent walk message')
 		print(spi.current_msg)
-                spi.pi.spi_xfer(spi.spi, spi.current_msg)        
-                waiting = True
+                spi.pi.spi_xfer(spi.spi, [10])        
                 spi.current_msg = None 
 
     except rospy.ROSInterruptException:
