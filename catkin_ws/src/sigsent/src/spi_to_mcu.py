@@ -4,6 +4,7 @@ import pigpio
 from std_msgs.msg import Int8
 import roslib
 from sigsent.msg import Drive
+from time import sleep
 
 roslib.load_manifest('sigsent')
 
@@ -181,7 +182,7 @@ if __name__ == '__main__':
                 spi.pi.spi_xfer(spi.spi, [40])
                 spi.current_msg = None
                 spi.turn_right = False
-                spi_wait.sleep()
+                sleep(1)
 
             elif spi.current_msg != None and spi.turn_right == False:
                 print('Sent walk message')
