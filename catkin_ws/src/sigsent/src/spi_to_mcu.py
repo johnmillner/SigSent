@@ -178,14 +178,14 @@ if __name__ == '__main__':
                 print('Sent drive message')
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)
                 waiting = True
-           	spi.current_msg = None 
+           	    spi.current_msg = None 
             # Walking mode
             elif spi.mode == 1  and spi.current_msg != None:
                 print('Sent walk message')
-		print(spi.current_msg)
+		        print(spi.current_msg)
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
                 waiting = True
-           	spi.current_msg = None 
+           	    spi.current_msg = None 
 
     except rospy.ROSInterruptException:
         spi.pi.spi_close(spi.pi.spi)

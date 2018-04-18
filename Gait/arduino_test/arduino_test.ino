@@ -66,18 +66,23 @@ byte angle_limit_error = 0b00000010;
 int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 200, 664, 596, 512, 358, 426, 512};
 
 int speed = 200;
+int gait_length = 5;
 int walking_zero_two_four[][18] = {
+//                     0     1    2    3    4    5    6    7 .  8 .  9 .  10 . 11 . 12 . 13 . 14 . 15 . 16 . 17
                       {512, 596, 512, 512, 426, 512, 512, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512},
                       {512, 596, 324, 512, 426, 512, 600, 426, 700, 512, 596, 550, 400, 596, 324, 512, 426, 512},
                       {512, 596, 512, 512, 426, 512, 600, 426, 474, 512, 596, 550, 400, 596, 512, 512, 426, 512},
-                      {624, 596, 512, 512, 426, 512, 425, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512}
+                      {624, 596, 512, 512, 426, 512, 425, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512},
+                      {624, 596, 324, 512, 426, 512, 425, 426, 700, 512, 596, 550, 512, 596, 324, 512, 426, 512}
                       };
 
 int walking_one_three_five[][18] = {
+//                     0     1    2    3    4    5    6    7 .  8 .  9 .  10 . 11 . 12 . 13 . 14 . 15 . 16 . 17
                       {512, 596, 512, 512, 426, 512, 512, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512},
                       {512, 596, 512, 512, 426, 700, 512, 426, 474, 425, 596, 324, 512, 596, 512, 624, 426, 700},
                       {512, 596, 512, 512, 426, 512, 512, 426, 474, 425, 596, 550, 512, 596, 512, 624, 426, 512},
-                      {512, 596, 512, 400, 426, 512, 512, 426, 474, 600, 596, 550, 512, 596, 512, 512, 426, 512}
+                      {512, 596, 512, 400, 426, 512, 512, 426, 474, 600, 596, 550, 512, 596, 512, 512, 426, 512},
+                      {512, 596, 512, 400, 426, 700, 512, 426, 474, 600, 596, 324, 512, 596, 512, 512, 426, 700}
                       };
 
 int one_three_five_steps[5] = {0, 3, 3, 1, 2};
@@ -186,13 +191,18 @@ int get_direction(byte dir)
     return DIR_ERROR;
 }
 
-//#####################################################
-//# Josh, the three functions below are ALL YOU BABY  #
-//# switch_mode, walk_move, drive_escs                #
-//### ##################################################
 byte switch_mode(int mode)
 {
     // Depending on the mode, do some stuff to the servos
+    if (mode == WALKING_MODE)
+    {
+        gait_state = 0;
+        walk_move(FWD);
+    }
+    else if (mode == DRIVING_MODE)
+    {
+      default_driving_stance();
+    }
 
     // Return 1 for success, 0 for failure
     return 1;
@@ -209,8 +219,12 @@ byte walk_move(int dir)
 
   gait_state++;
 
-  if (gait_state > 3)
-    gait_state = 0;
+  if (gait_state > gait_length)
+  {
+    // Skip the default orientation in walking mode
+    gait_state = 1;
+  }
+  
   delay(600);
   
   return 1;
@@ -222,7 +236,7 @@ byte default_walking_stance()
   for (id=0; id<18;id++)
   {
   
-    Dynamixel.move(id, walking_zero_two_four[id]);
+    Dynamixel.moveSpeed(id, walking_zero_two_four[id], speed);
 
     //check_servo_positions(-1);
   }
@@ -232,9 +246,10 @@ byte default_driving_stance()
 {
   for (id=0; id<18;id++)
   {
-    Dynamixel.move(id, walking_zero_two_four[id]);
-    //check_servo_positions(-1);
+    Dynamixel.moveSpeed(id, default_driving[id], speed);
   }
+
+  delay(600);
 }
 
 // We don't have to have a parameter since the direction value is

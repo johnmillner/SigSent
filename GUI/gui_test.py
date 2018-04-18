@@ -273,6 +273,8 @@ class TeleOp():
         if self.mode == 1 and msg.linear.x == 0 and msg.angular.z == 0:
             direction = 3
 
+        print(msg)
+
         # Driving mode
         if direction != None and self.mode == 0:
             d = Drive()

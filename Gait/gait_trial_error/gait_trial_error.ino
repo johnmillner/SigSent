@@ -34,10 +34,13 @@ int walking_gait_tripod[][18] = {
 };
 int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 200, 664, 596, 512, 358, 426, 512};
 
+// This is triangle
+//int zero_two_four_steps[5] =  {0, 1, 2, 3, 3};
+//int one_three_five_steps[5] = {0, 3, 3, 1, 2};
 
-int one_three_five_steps[5] = {0, 3, 3, 1, 2};
-
-int zero_two_four_steps[5] =  {0, 1, 2, 3, 3};
+// This is square
+int zero_two_four_steps[10] =  {0, 1, 2, 2, 3, 3, 4};
+int one_three_five_steps[10] = {0, 3, 3, 4, 1, 2, 2};
 
 void move_fwd(int zero_two_four_step, int one_three_five_step)
 {
@@ -89,8 +92,9 @@ void setup()
 
   while (1 == 1)
   {
-      enter_driving();
-      delay(600);
+//      enter_driving();
+//      delay(600);
+;
   }
      
 }
@@ -98,7 +102,7 @@ void setup()
 void loop()
 {
   int i = 0, j = 0;
-  for (i = 1; i < 6; i++)
+  for (i = 1; i < 7; i++)
   {
 //    for (j = 0; j < 18; j++)
 //    {
