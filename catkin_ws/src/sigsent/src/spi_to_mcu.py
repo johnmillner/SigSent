@@ -4,6 +4,7 @@ import pigpio
 from std_msgs.msg import Int8
 import roslib
 from sigsent.msg import Drive
+from time import sleep
 
 roslib.load_manifest('sigsent')
 
@@ -15,7 +16,6 @@ class Message:
 
     def __init__(self):
 
-        self.status_req = 0b10101010
 
         # Header message bits define what message is coming next so that the MCU
         # knows how to parse it
@@ -102,11 +102,13 @@ class Spi:
     def __init__(self):
         rospy.init_node('spi_to_mcu')
         
+        self.status_req = 0b10101010
         self.drive_rate = rospy.Rate(20)
         self.walk_rate = rospy.Rate(2)
         self.rate = self.drive_rate
         self.mode = 0
 
+        self.turn_right = False
         self.pi = pigpio.pi()
         self.spi_bus = 1
         self.spi_baud = 115200
@@ -128,24 +130,32 @@ class Spi:
         if data.data == 0:
             self.mode = 0
             self.rate = self.drive_rate
-            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
+            self.pi.spi_xfer(self.spi, [20])
         elif data.data == 1:
             self.mode = 1
             self.rate = self.walk_rate
-            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
+            self.pi.spi_xfer(self.spi, [30])
         
     def walk_cb(self, data):
+        
         if data.data < 0 or data.data > 4:
             return
+        
+        directions = list(self.direction_list)
+        directions[data.data] = True
 
         if data.data == 3:
             self.current_msg = None
             return
 
-        directions = list(self.direction_list)
-        directions[data.data] = True
-        self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
+        if data.data == 2:
+            self.turn_right = True
+            self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])    
+            return
+
         
+        self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
+	print('walk message rcv') 
     def drive_cb(self, data):
         if data.direction.data < 0 or data.direction.data > 3:
             return
@@ -162,29 +172,23 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
+        spi_wait = rospy.Rate(1)
 
-        waiting = False
+        waiting = True
         while not rospy.is_shutdown():
-
-            if waiting == True:
-                count, rx_data = spi.pi.spi_xfer(spi.spi, [spi.status_req])
-                
-                if rx_data[0] == 0b11111111:
-                    waiting = False
-
-            # Driving mode
-            elif spi.mode == 0 and spi.current_msg != None:
-                #print('Sent drive message')
-                spi.pi.spi_xfer(spi.spi, spi.current_msg)
-                waiting = True
-
             # Walking mode
-            elif spi.mode == 1  and spi.current_msg != None:
-                #print('Sent walk message')
-                spi.pi.spi_xfer(spi.spi, spi.current_msg)        
-                waiting = True
-            
-            #spi.rate.sleep()
+            if spi.current_msg != None and spi.turn_right == True:
+                print('Sent turn message')
+                spi.pi.spi_xfer(spi.spi, [40])
+                spi.current_msg = None
+                spi.turn_right = False
+                sleep(1)
+
+            elif spi.current_msg != None and spi.turn_right == False:
+                print('Sent walk message')
+                spi.pi.spi_xfer(spi.spi, [10])        
+                spi.current_msg = None 
+                spi_wait.sleep()
 
     except rospy.ROSInterruptException:
         spi.pi.spi_close(spi.pi.spi)

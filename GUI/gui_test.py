@@ -256,36 +256,38 @@ class TeleOp():
         # Using those inputs, create a Twist() message here to send to the teleop node
         #               fwd  twist
         # axes: [-0.0, -0.0, -0.0, 0.0, 0.0, 0.0]
-        msg.linear.x = self.speed * data.axes[1]
-        msg.angular.z = self.speed * data.axes[2]
+        msg.linear.x = self.speed * data.axes[5]
+        #msg.angular.z = self.speed * data.axes[2]
 
         # Forward
         if msg.linear.x > 0:
             direction = 0
         elif msg.linear.x < 0:
             direction = 3
-        elif msg.angular.z > 0:
+        elif data.axes[4] > 0:
             direction = 1
-        elif msg.angular.z < 0:
+        elif data.axes[4] < 0:
             direction = 2
 
         # tells spi to stop sending
-        if self.mode == 1 and msg.linear.x == 0 and msg.angular.z == 0:
-            direction = 3
+        # if self.mode == 1 and msg.linear.x == 0 and msg.angular.z == 0:
+        #     direction = 3
+
+        print(msg)
 
         # Driving mode
         if direction != None and self.mode == 0:
             d = Drive()
             d.direction.data = direction
             d.speed.data = self.speed * max(abs(msg.linear.x), abs(msg.angular.z))
-
+            print('driving')
             self.drive_pub.publish(d)
 
         # Walking mode
         elif direction != None and self.mode == 1:
             cmd = Int8()
             cmd.data = direction
-
+            print('walking')
             self.walk_pub.publish(cmd)
 
       
