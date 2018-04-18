@@ -163,13 +163,14 @@ class Spi:
 if __name__ == '__main__':
     try:
         spi = Spi()
-        spi_wait = rospy.Rate(100)
+        spi_wait = rospy.Rate(10)
 
-        waiting = False
+        waiting = True
         while not rospy.is_shutdown():
             if waiting == True:
                 count, rx_data = spi.pi.spi_xfer(spi.spi, [spi.status_req])
                 print('waiting')
+		print(rx_data[0])
                 if rx_data[0] == 0b11111111:
                     waiting = False
                 spi_wait.sleep()
@@ -182,7 +183,7 @@ if __name__ == '__main__':
             # Walking mode
             elif spi.mode == 1  and spi.current_msg != None:
                 print('Sent walk message')
-		        print(spi.current_msg)
+		print(spi.current_msg)
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
                 waiting = True
                 spi.current_msg = None 
