@@ -125,15 +125,14 @@ class Spi:
         self.current_msg = None
 
     def mode_cb(self, data):
-	print('switching to {}'.format(data.data))
         if data.data == 0:
             self.mode = 0
             self.rate = self.drive_rate
-            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(driving=True))
+            self.pi.spi_xfer(self.spi, [20])
         elif data.data == 1:
             self.mode = 1
             self.rate = self.walk_rate
-            self.pi.spi_xfer(self.spi, self.message_gen.create_mode_change_message(walking=True))
+            self.pi.spi_xfer(self.spi, [30])
         
     def walk_cb(self, data):
         if data.data < 0 or data.data > 4:
@@ -170,7 +169,6 @@ if __name__ == '__main__':
             # Walking mode
             if spi.current_msg != None:
                 print('Sent walk message')
-		print(spi.current_msg)
                 spi.pi.spi_xfer(spi.spi, [10])        
                 spi.current_msg = None 
 

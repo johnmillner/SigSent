@@ -76,6 +76,18 @@ void enter_driving()
   {
     Dynamixel.moveSpeed(i, default_driving[i], speed);
   }
+
+  delay(600);
+}
+
+void enter_walking()
+{
+  for (int i = 0; i < 18; i++)
+  {
+    Dynamixel.moveSpeed(i, walking_zero_two_four[0][i], speed);
+  }
+
+  delay(600);
 }
 
 void walk()
@@ -131,6 +143,13 @@ void loop()
   else if (command == 20)
   {
     enter_driving();
+    command = 0;
+  }
+
+  else if (command == 30)
+  {
+    enter_walking();
+    command = 0;
   }
   
 }
