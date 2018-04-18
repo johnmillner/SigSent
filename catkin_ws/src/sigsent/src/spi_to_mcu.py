@@ -169,23 +169,23 @@ if __name__ == '__main__':
         while not rospy.is_shutdown():
             if waiting == True:
                 count, rx_data = spi.pi.spi_xfer(spi.spi, [spi.status_req])
-                
+                print('waiting')
                 if rx_data[0] == 0b11111111:
                     waiting = False
                 spi_wait.sleep()
             # Driving mode
-            if spi.mode == 0 and spi.current_msg != None:
+            elif spi.mode == 0 and spi.current_msg != None:
                 print('Sent drive message')
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)
                 waiting = True
-           	    spi.current_msg = None 
+                spi.current_msg = None 
             # Walking mode
             elif spi.mode == 1  and spi.current_msg != None:
                 print('Sent walk message')
 		        print(spi.current_msg)
                 spi.pi.spi_xfer(spi.spi, spi.current_msg)        
                 waiting = True
-           	    spi.current_msg = None 
+                spi.current_msg = None 
 
     except rospy.ROSInterruptException:
         spi.pi.spi_close(spi.pi.spi)
