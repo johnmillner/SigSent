@@ -107,6 +107,7 @@ class Spi:
         self.rate = self.drive_rate
         self.mode = 0
 
+        self.turn_right = False
         self.pi = pigpio.pi()
         self.spi_bus = 1
         self.spi_baud = 115200
@@ -142,6 +143,11 @@ class Spi:
             self.current_msg = None
             return
 
+        if data.data == 1:
+            self.turn_right = True
+            self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])    
+            return
+
         directions = list(self.direction_list)
         directions[data.data] = True
         self.current_msg = self.message_gen.create_walking_message(fwd=directions[0], left=directions[1], right=directions[2])
@@ -167,7 +173,13 @@ if __name__ == '__main__':
         waiting = True
         while not rospy.is_shutdown():
             # Walking mode
-            if spi.current_msg != None:
+            if spi.current_msg != None and spi.turn_right == True:
+                print('Sent turn message')
+                spi.pi.spi_xfer(spi.spi, [40])
+                spi.current_msg = None
+                spi.turn_right = False
+                
+            elif spi.current_msg != None:
                 print('Sent walk message')
                 spi.pi.spi_xfer(spi.spi, [10])        
                 spi.current_msg = None 

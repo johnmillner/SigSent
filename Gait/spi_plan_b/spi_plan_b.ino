@@ -9,6 +9,8 @@
 
 int torque_level = 1023; //sets torque to ~90% as default
 int speed = 200;
+int turning_speed = 150;
+
 volatile byte command = 0;
 
 int walking_zero_two_four[][18] = {
@@ -44,6 +46,9 @@ int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 
 int zero_two_four_steps[10] =  {0, 1, 2, 2, 3, 3, 4};
 int one_three_five_steps[10] = {0, 3, 3, 4, 1, 2, 2};
 
+int zero_two_four_turn_steps[10] =  {0, 1, 2, 0, 0};
+int one_three_five_turn_steps[10] = {0, 0, 0, 1, 2};
+
 void move_fwd(int zero_two_four_step, int one_three_five_step)
 {
     for (int i = 0; i < 18; i++)
@@ -60,6 +65,29 @@ void move_fwd(int zero_two_four_step, int one_three_five_step)
         Dynamixel.moveSpeed(i, walking_one_three_five[one_three_five_step][i], speed);
       }
     }
+}
+
+void turn_right()
+{
+  for (int i = 0; i < 5; i++)
+  {
+    for (int j = 0; j < 18; j++)
+    {
+      int leg = i / 3;
+
+      // 0-2-4
+      if (leg % 2 == 0)
+      {
+        Dynamixel.moveSpeed(i, walking_zero_two_four[zero_two_four_turn_steps[i]][j], speed);
+      }
+      else
+      {
+        Dynamixel.moveSpeed(i, walking_one_three_five[one_three_five_turn_steps[i]][j], speed);
+      } 
+    }
+  }
+
+  delay(600);
 }
 
 ISR (SPI_STC_vect)
@@ -149,6 +177,12 @@ void loop()
   else if (command == 30)
   {
     enter_walking();
+    command = 0;
+  }
+
+  else if (command == 40)
+  {
+    turn_right();
     command = 0;
   }
   

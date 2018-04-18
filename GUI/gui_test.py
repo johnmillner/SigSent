@@ -264,9 +264,9 @@ class TeleOp():
             direction = 0
         elif msg.linear.x < 0:
             direction = 3
-        elif msg.angular.z > 0:
+        elif data.axes[4] > 0:
             direction = 1
-        elif msg.angular.z < 0:
+        elif data.axes[4] < 0:
             direction = 2
 
         # tells spi to stop sending
@@ -280,7 +280,7 @@ class TeleOp():
             d = Drive()
             d.direction.data = direction
             d.speed.data = self.speed * max(abs(msg.linear.x), abs(msg.angular.z))
-
+            print('driving')
             self.drive_pub.publish(d)
 
         # Walking mode
