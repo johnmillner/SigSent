@@ -97,15 +97,15 @@ void move_fwd(int zero_two_four_step, int one_three_five_step)
       // 0-2-4
       if (leg % 2 == 0)
       {
-        Dynamixel.moveSpeed(i, walking_zero_two_four[zero_two_four_step][i], speed);
+        Dynamixel.moveSpeed(i, walking_zero_two_four[zero_two_four_steps[zero_two_four_step]][i], speed);
       }
       else
       {
-        Dynamixel.moveSpeed(i, walking_one_three_five[one_three_five_step][i], speed);
+        Dynamixel.moveSpeed(i, walking_one_three_five[one_three_five_steps[one_three_five_step]][i], speed);
       }
     }
 }
-int gait_state =-1;
+int gait_state = 0;
 
 // Lets the MCU to know what to expect for the next message to parse
 // it correctly
@@ -210,12 +210,13 @@ byte switch_mode(int mode)
 
 byte walk_move(int dir)
 {
-  for (id=0; id<18;id++)
-  {
+    digitalWrite(42, HIGH);  
+    delay(1000);               
+    digitalWrite(42, LOW);    
+    delay(1000);
     // Commented out until we actually have a full gait to move through
      move_fwd(zero_two_four_steps[gait_state], one_three_five_steps[gait_state]);
     // check_servo_positions(-1);
-  }
 
   gait_state++;
 
@@ -226,6 +227,11 @@ byte walk_move(int dir)
   }
   
   delay(600);
+  
+  digitalWrite(42, HIGH);  
+  delay(100);               
+  digitalWrite(42, LOW);    
+  delay(100);
   
   return 1;
 }
@@ -411,6 +417,7 @@ void reset_messages()
 
 void setup() 
 {
+    pinMode(42, OUTPUT);
     Serial.begin(9600);
     // have to send on master in, *slave out*
     pinMode(MISO, OUTPUT);
@@ -434,6 +441,10 @@ void loop()
         Serial.println("Doing nothing");
         // Do nothing
         ready_flag = 0xFF;
+        digitalWrite(42, HIGH);  
+        delay(500);               
+        digitalWrite(42, LOW);    
+        delay(500);                       
     }
 
     while (message_data[0] == -1)
@@ -444,6 +455,7 @@ void loop()
     if (doing_command && receiving_header)
     {
         Serial.println("Receiving header");
+                
         
         MessageType message_type = get_message_type(message_data[0]);
 
@@ -503,7 +515,8 @@ void loop()
 
     else if (doing_command && (receiving_walking_move || receiving_esc_direction))
     {
-        Serial.println("Receiving walking");
+        
+        
         // This shouldnt be necessary, but just in case...
         while (message_data[1] == -1)
         {
@@ -526,15 +539,15 @@ void loop()
 
         else if (receiving_walking_move)
         {
+          Serial.println("Receiving walking");
             byte ret = walk_move(dir);
 
             if (ret == 0)
             {
                 ;
             }
-
-            doing_command = 0;
             reset_messages();
+            doing_command = 0;
             receiving_walking_move = 0;
         }
 
