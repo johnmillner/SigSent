@@ -63,13 +63,43 @@ byte overheating_error = 0b00000100;
 byte angle_limit_error = 0b00000010;
 // These are angles defined by us to constitute as the default stances for
 // sigsent to move to for each mode and incase any error in incountered
-int default_walking[] = {512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512};
-int default_driving[] = {358, 426, 512, 664, 596, 512, 512, 700, 200, 512, 323, 825, 664, 426, 512, 358, 596, 512};
+int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 200, 664, 596, 512, 358, 426, 512};
 
-int walking_gait_tripod[][18] = {{512, 426, 512, 512, 596, 512, 512, 596, 512, 512, 426, 512, 512, 426, 512, 512, 596, 512},
-                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+int speed = 200;
+int walking_zero_two_four[][18] = {
+                      {512, 596, 512, 512, 426, 512, 512, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512},
+                      {512, 596, 324, 512, 426, 512, 600, 426, 700, 512, 596, 550, 400, 596, 324, 512, 426, 512},
+                      {512, 596, 512, 512, 426, 512, 600, 426, 474, 512, 596, 550, 400, 596, 512, 512, 426, 512},
+                      {624, 596, 512, 512, 426, 512, 425, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512}
+                      };
+
+int walking_one_three_five[][18] = {
+                      {512, 596, 512, 512, 426, 512, 512, 426, 474, 512, 596, 550, 512, 596, 512, 512, 426, 512},
+                      {512, 596, 512, 512, 426, 700, 512, 426, 474, 425, 596, 324, 512, 596, 512, 624, 426, 700},
+                      {512, 596, 512, 512, 426, 512, 512, 426, 474, 425, 596, 550, 512, 596, 512, 624, 426, 512},
+                      {512, 596, 512, 400, 426, 512, 512, 426, 474, 600, 596, 550, 512, 596, 512, 512, 426, 512}
+                      };
+
+int one_three_five_steps[5] = {0, 3, 3, 1, 2};
+int zero_two_four_steps[5] =  {0, 1, 2, 3, 3};
+
+void move_fwd(int zero_two_four_step, int one_three_five_step)
+{
+    for (int i = 0; i < 18; i++)
+    {
+      int leg = i / 3;
+
+      // 0-2-4
+      if (leg % 2 == 0)
+      {
+        Dynamixel.moveSpeed(i, walking_zero_two_four[zero_two_four_step][i], speed);
+      }
+      else
+      {
+        Dynamixel.moveSpeed(i, walking_one_three_five[one_three_five_step][i], speed);
+      }
+    }
+}
 int gait_state =-1;
 
 // Lets the MCU to know what to expect for the next message to parse
@@ -90,7 +120,7 @@ int counter= 0; //general counter
 float diff = 0;
 float tolerance = 0.1;
 float current_tolerance = 0;
-int number_of_gait_states = sizeof (walking_gait_tripod) / sizeof (walking_gait_tripod[0]);
+//int number_of_gait_states = sizeof (walking_gait_tripod) / sizeof (walking_gait_tripod[0]);
 
 enum ModeValue
 {
@@ -118,7 +148,7 @@ enum MessageType
 
 Direction esc_dir;
 
-ModeValue get_mode(byte mode)
+int get_mode(byte mode)
 {
     if (mode == walking_mode)
         return WALKING_MODE;
@@ -128,7 +158,7 @@ ModeValue get_mode(byte mode)
     return MODE_ERROR;
 }
 
-MessageType get_message_type(byte header)
+int get_message_type(byte header)
 {
     Serial.println(header);
     Serial.println(walking_move_header);
@@ -142,7 +172,7 @@ MessageType get_message_type(byte header)
     return MESSAGE_ERROR;
 }
 
-Direction get_direction(byte dir)
+int get_direction(byte dir)
 {
     if (dir == fwd)
         return FWD;
@@ -160,7 +190,7 @@ Direction get_direction(byte dir)
 //# Josh, the three functions below are ALL YOU BABY  #
 //# switch_mode, walk_move, drive_escs                #
 //### ##################################################
-byte switch_mode(ModeValue mode)
+byte switch_mode(int mode)
 {
     // Depending on the mode, do some stuff to the servos
 
@@ -168,12 +198,12 @@ byte switch_mode(ModeValue mode)
     return 1;
 }
 
-byte walk_move(Direction dir)
+byte walk_move(int dir)
 {
   for (id=0; id<18;id++)
   {
     // Commented out until we actually have a full gait to move through
-    // Dynamixel.move(id, walking_gait_tripod[gait_state][id]);
+     move_fwd(zero_two_four_steps[gait_state], one_three_five_steps[gait_state]);
     // check_servo_positions(-1);
   }
 
@@ -181,6 +211,7 @@ byte walk_move(Direction dir)
 
   if (gait_state > 3)
     gait_state = 0;
+  delay(600);
   
   return 1;
 }
@@ -191,7 +222,7 @@ byte default_walking_stance()
   for (id=0; id<18;id++)
   {
   
-    Dynamixel.move(id, default_walking[id]);
+    Dynamixel.move(id, walking_zero_two_four[id]);
 
     //check_servo_positions(-1);
   }
@@ -201,15 +232,15 @@ byte default_driving_stance()
 {
   for (id=0; id<18;id++)
   {
-    Dynamixel.move(id, default_driving[id]);
-    check_servo_positions(-1);
+    Dynamixel.move(id, walking_zero_two_four[id]);
+    //check_servo_positions(-1);
   }
 }
 
 // We don't have to have a parameter since the direction value is
 // a global value that was set in the previous SPI interrupt, but I
 // think its more readable to know exactly is being passed to it when tracing the caller
-byte drive_escs(Direction dir, int speed)
+byte drive_escs(int dir, int speed)
 {
 
     return 1;
@@ -291,41 +322,41 @@ byte check_servos_for_overheat()
 
 // This function checks if all the servos have achieved their position with a
 // -+10% tolerance and if not corrects the servo takes in current
-byte check_servo_positions(int current_gait_position)
-{
-  if (current_gait_position >  (number_of_gait_states-1))
-  {
-    //
-    return 0;
-  }
-
-  for(id=0; id<18;id++)
-  {
-    if (current_gait_position == -1)
-    {
-      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
-    }
-    else
-    {
-      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
-
-    }
-
-    if (return_status_byte == 1)
-    {
-      continue;
-    }
-    else
-    {
-      while(return_status_byte != 1)
-      {
-        Dynamixel.move(id, walking_gait_tripod[current_gait_position][id]);
-        delay(200);//
-        return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
-      }
-    }
-  }
-}
+//byte check_servo_positions(int current_gait_position)
+//{
+//  if (current_gait_position >  (number_of_gait_states-1))
+//  {
+//    //
+//    return 0;
+//  }
+//
+//  for(id=0; id<18;id++)
+//  {
+//    if (current_gait_position == -1)
+//    {
+//      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+//    }
+//    else
+//    {
+//      return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+//
+//    }
+//
+//    if (return_status_byte == 1)
+//    {
+//      continue;
+//    }
+//    else
+//    {
+//      while(return_status_byte != 1)
+//      {
+//        Dynamixel.move(id, walking_gait_tripod[current_gait_position][id]);
+//        delay(200);//
+//        return_status_byte = ten_percent_tolerance_check(id, walking_gait_tripod[current_gait_position][id]);
+//      }
+//    }
+//  }
+//}
 
 // This fucntion specifically checks if a servo position is within 10% tolerance
 // of its commanded/assumed position.
@@ -480,8 +511,6 @@ void loop()
 
         else if (receiving_walking_move)
         {
-            Serial.println("Entering standing mode");
-            default_walking_stance();
             byte ret = walk_move(dir);
 
             if (ret == 0)
