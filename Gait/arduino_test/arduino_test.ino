@@ -61,6 +61,7 @@ byte overload_error = 0b00100000;
 byte range_error = 0b00001000;
 byte overheating_error = 0b00000100;
 byte angle_limit_error = 0b00000010;
+
 // These are angles defined by us to constitute as the default stances for
 // sigsent to move to for each mode and incase any error in incountered
 int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 200, 664, 596, 512, 358, 426, 512};
@@ -272,34 +273,8 @@ ISR (SPI_STC_vect)
     // grab byte from SPI Data Register
     byte temp = SPDR;
     
-    if (temp == 0b10101010 && ready_flag == 0)
-    {
-        SPDR = 0;
-        return;
-    }
-    
     message_data[next_msg++] = temp;
 
-    //Serial.print("Received: ");
-
-    // 10101010 will be an alert pi sends to MCU when it has the OK 
-    // to send a command. Tells MCU to expect a message header
-
-    
-    
-    if (message_data == 0b10101010)
-    {
-        if (ready_flag == 0xFF)
-        {
-            doing_command = 1;
-            receiving_header = 1;  
-            ready_flag = 0;
-            message_data[0] = -1;
-            next_msg = 0;
-        }
-        
-        SPDR = ready_flag;
-    }
 }
 
 // This function checks all servos if there are any errors for overloading or
@@ -417,6 +392,8 @@ void reset_messages()
 
 void setup() 
 {
+  receiving_header = 1;
+  reset_messages();
     pinMode(42, OUTPUT);
     Serial.begin(9600);
     // have to send on master in, *slave out*
@@ -435,8 +412,7 @@ void setup()
 
 void loop() 
 {
-
-    while(!doing_command)
+    while (message_data[0] == -1)
     {
         Serial.println("Doing nothing");
         // Do nothing
@@ -447,12 +423,7 @@ void loop()
         delay(500);                       
     }
 
-    while (message_data[0] == -1)
-    {
-        // Wait for message from PI
-    }
-
-    if (doing_command && receiving_header)
+    if (receiving_header)
     {
         Serial.println("Receiving header");
                 
@@ -481,7 +452,7 @@ void loop()
         }
     }
 
-    else if (doing_command && receiving_mode)
+    else if (receiving_mode)
     {
         Serial.println("Receiving mode");
         // This shouldnt be necessary, but just in case...
@@ -513,7 +484,7 @@ void loop()
         reset_messages();
     }
 
-    else if (doing_command && (receiving_walking_move || receiving_esc_direction))
+    else if ((receiving_walking_move || receiving_esc_direction))
     {
         
         
@@ -560,7 +531,7 @@ void loop()
         }
     }
 
-    else if (doing_command && receiving_esc_speed)
+    else if (receiving_esc_speed)
     {
         // This shouldnt be necessary, but just in case...
         while (message_data[2] == -1)
