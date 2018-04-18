@@ -42,10 +42,11 @@ int default_driving[] = {358, 596, 512, 664, 426, 512, 512, 323, 825, 512, 700, 
 //int zero_two_four_steps[5] =  {0, 1, 2, 3, 3};
 //int one_three_five_steps[5] = {0, 3, 3, 1, 2};
 
-// This is square
+// This is square walking
 int zero_two_four_steps[10] =  {0, 1, 2, 2, 3, 3, 4};
 int one_three_five_steps[10] = {0, 3, 3, 4, 1, 2, 2};
 
+// This is turning
 int zero_two_four_turn_steps[10] =  {0, 1, 2, 0, 0};
 int one_three_five_turn_steps[10] = {0, 0, 0, 1, 2};
 
