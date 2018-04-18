@@ -178,8 +178,8 @@ if __name__ == '__main__':
                 spi.pi.spi_xfer(spi.spi, [40])
                 spi.current_msg = None
                 spi.turn_right = False
-                
-            elif spi.current_msg != None:
+
+            elif spi.current_msg != None and spi.turn_right == False:
                 print('Sent walk message')
                 spi.pi.spi_xfer(spi.spi, [10])        
                 spi.current_msg = None 
